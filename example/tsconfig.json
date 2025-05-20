@@ -1,0 +1,10 @@
+{
+  "extends": "expo/tsconfig.base",
+  "compilerOptions": {
+    "strict": true,
+    "paths": {
+      "rn-watch-connect": ["../src/index"],
+      "rn-watch-connect/*": ["../src/*"]
+    }
+  }
+}

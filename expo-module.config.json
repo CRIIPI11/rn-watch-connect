@@ -1,0 +1,9 @@
+{
+  "platforms": ["apple", "android", "web"],
+  "apple": {
+    "modules": ["RnWatchConnectModule"]
+  },
+  "android": {
+    "modules": ["expo.modules.rnwatchconnect.RnWatchConnectModule"]
+  }
+}
