@@ -1,6 +1,15 @@
 import { useEvent } from "expo";
-import RnWatchConnect from "rn-watch-connect";
+import RnWatchConnect, { useEventListener } from "rn-watch-connect";
 import { Button, SafeAreaView, ScrollView, Text, View } from "react-native";
+import { useState } from "react";
+
+type MyMessage = {
+  message: string;
+};
+
+type MyReply = {
+  response: string;
+};
 
 export default function App() {
   const onReachabilityChanged = useEvent(
@@ -22,6 +31,29 @@ export default function App() {
     "onWatchAppInstallChanged",
     {
       isWatchAppInstalled: RnWatchConnect.isWatchAppInstalled,
+    }
+  );
+  const [messageReceived, setMessageReceived] = useState("");
+
+  useEventListener<MyMessage>(
+    RnWatchConnect,
+    "onMessageReceived",
+    ({ message }) => {
+      console.log("Message Received:", message);
+      setMessageReceived(message);
+    }
+  );
+
+  useEventListener<{ message: MyMessage; replyId: string }>(
+    RnWatchConnect,
+    "onMessageWithReply",
+    (event) => {
+      console.log("Message With Reply:", event);
+      setMessageReceived(event.message.message);
+
+      RnWatchConnect.replyToMessage(event.replyId, {
+        response: "Hello ",
+      });
     }
   );
 
@@ -50,6 +82,25 @@ export default function App() {
           <Text>{`Is Watch Paired: ${JSON.stringify(onWatchPairedChanged)}`}</Text>
           <Text>{`Is Watch App Installed: ${JSON.stringify(onWatchAppInstallChanged)}`}</Text>
           <Text>{`Is Watch Reachable: ${JSON.stringify(onReachabilityChanged)}`}</Text>
+        </Group>
+        <Group name="Send Message">
+          <Button
+            title="Send Message"
+            onPress={async () => {
+              try {
+                const reply = await RnWatchConnect.sendMessage<
+                  MyMessage,
+                  MyReply
+                >({
+                  message: "Hello from here",
+                });
+                console.log("Reply:", reply);
+              } catch (error) {
+                console.log("Error:", error);
+              }
+            }}
+          />
+          <Text>{`Message Received: ${messageReceived}`}</Text>
         </Group>
       </ScrollView>
     </SafeAreaView>

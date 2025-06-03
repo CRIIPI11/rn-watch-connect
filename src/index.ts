@@ -2,3 +2,4 @@
 // and on native platforms to RnWatchConnectModule.ts
 export { default } from "./RnWatchConnectModule";
 export * from "./RnWatchConnect.types";
+export * from "./hooks";

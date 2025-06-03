@@ -180,7 +180,6 @@
 			isa = PBXGroup;
 			children = (
 				E4C2B98F2DE29C7B00F8FA2C /* Preview Assets.xcassets */,
-				E4C2B9992DE29D0200F8FA2C /* ViewModel.swift */,
 			);
 			path = "Preview Content";
 			sourceTree = "<group>";
@@ -192,6 +191,7 @@
 				E4C2B9912DE29C7B00F8FA2C /* aaaWatch_appApp.swift */,
 				E4C2B9922DE29C7B00F8FA2C /* Assets.xcassets */,
 				E4C2B9932DE29C7B00F8FA2C /* ContentView.swift */,
+				E4C2B9992DE29D0200F8FA2C /* ViewModel.swift */,
 			);
 			path = "aaaWatch-app Watch App";
 			sourceTree = "<group>";

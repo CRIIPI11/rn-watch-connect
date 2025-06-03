@@ -17,7 +17,7 @@ class WatchConnectivityViewModel: NSObject, ObservableObject {
   static let shared = WatchConnectivityViewModel()
   
   @Published var isReachable: Bool = false
-  
+  @Published var message: String = "No message received"
   private override init() {
     super.init()
     activateSession()
@@ -29,6 +29,16 @@ class WatchConnectivityViewModel: NSObject, ObservableObject {
       session.delegate = self
       session.activate()
     }
+  }
+  
+  func sendMessage(_ message: [String: Any], replyHandler: (([String: Any]) -> Void)? = nil, errorHandler: ((Error) -> Void)? = nil) {
+    guard WCSession.default.isReachable else {
+      print("iPhone not reachable")
+      errorHandler?(NSError(domain: "WatchConnectivity", code: 1, userInfo: [NSLocalizedDescriptionKey: "iPhone not reachable."]))
+      return
+    }
+    
+    WCSession.default.sendMessage(message, replyHandler: replyHandler, errorHandler: errorHandler)
   }
   
 }
@@ -49,5 +59,12 @@ extension WatchConnectivityViewModel: WCSessionDelegate {
     }
   }
   
+
+  func session(_ session: WCSession, didReceiveMessage message: [String : Any], replyHandler: @escaping ([String : Any]) -> Void) {
+    DispatchQueue.main.async {
+      self.message = message["message"] as? String ?? "No message received"
+    }
+    replyHandler(["message": "Message received"])
+  }
   
 }
