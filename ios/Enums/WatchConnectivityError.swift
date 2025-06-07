@@ -35,3 +35,27 @@ enum WatchConnectivityError: LocalizedError {
         }
     }
 } 
+
+enum MessageError: LocalizedError {
+    
+    case invalidBase64Format
+    case invalidBase64Length
+    case invalidBase64Padding
+    case invalidBase64Decoding
+    case invalidReplyId
+    
+    var errorDescription: String? {
+        switch self {
+        case .invalidBase64Format:
+            return "String contains invalid base64 characters"
+        case .invalidBase64Length:
+            return "Base64 string length must be multiple of 4"
+        case .invalidBase64Padding:
+            return "Invalid base64 padding"
+        case .invalidBase64Decoding:
+            return "Failed to decode base64 string"
+        case .invalidReplyId:
+            return "Invalid reply ID"
+        }
+    }
+}

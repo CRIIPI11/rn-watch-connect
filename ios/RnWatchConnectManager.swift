@@ -25,7 +25,9 @@ final class RnWatchConnectManager: NSObject, WCSessionDelegate {
     
     var messageReceivedHandler: (([String: Any]) -> Void)?
     var messageWithReplyHandler: (([String: Any], @escaping ([String: Any]) -> Void) -> Void)?
-    
+    var messageDataReceivedHandler: ((Data) -> Void)?
+    var messageDataWithReplyHandler: ((Data, @escaping (Data) -> Void) -> Void)?
+
     // Initialization
     private override init() {
         super.init()
@@ -35,6 +37,8 @@ final class RnWatchConnectManager: NSObject, WCSessionDelegate {
     deinit {
         messageReceivedHandler = nil
         messageWithReplyHandler = nil
+        messageDataReceivedHandler = nil
+        messageDataWithReplyHandler = nil
     }
     
     // MARK: - Private methods
@@ -77,11 +81,20 @@ final class RnWatchConnectManager: NSObject, WCSessionDelegate {
             return
         }
         
-        WCSession.default.sendMessage(message) { reply in
-            replyHandler?(reply)
-        } errorHandler: { error in
-            errorHandler?(WatchConnectivityError.messageSendFailed(error))
-        }
+        WCSession.default.sendMessage(message, replyHandler: replyHandler, errorHandler: errorHandler)
+    }
+    
+    func sendDataMessage(
+      _ data: Data,
+      replyHandler: ((Data) -> Void)? = nil,
+      errorHandler: ((Error) -> Void)? = nil
+    ) {
+      guard WCSession.default.isReachable else {
+        errorHandler?(WatchConnectivityError.watchNotReachable)
+        return
+      }
+
+      WCSession.default.sendMessageData(data, replyHandler: replyHandler, errorHandler: errorHandler)
     }
     
     // MARK: - WCSessionDelegate
@@ -128,6 +141,18 @@ final class RnWatchConnectManager: NSObject, WCSessionDelegate {
         DispatchQueue.main.async { [weak self] in
             self?.messageWithReplyHandler?(message, replyHandler)
         }
+    }
+    
+    func session(_ session: WCSession, didReceiveMessageData messageData: Data) {
+      DispatchQueue.main.async { [weak self] in
+        self?.messageDataReceivedHandler?(messageData)
+      }
+    }
+
+    func session(_ session: WCSession, didReceiveMessageData messageData: Data, replyHandler: @escaping (Data) -> Void) {
+      DispatchQueue.main.async { [weak self] in
+        self?.messageDataWithReplyHandler?(messageData, replyHandler)
+      }
     }
     
     func sessionDidBecomeInactive(_ session: WCSession) {

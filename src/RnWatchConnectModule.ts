@@ -1,23 +1,33 @@
-import { NativeModule, requireNativeModule } from 'expo';
+import { NativeModule, requireNativeModule } from "expo";
 
-import { RnWatchConnectModuleEvents } from './RnWatchConnect.types';
+import {
+  RnWatchConnectModuleEvents,
+  RnWatchConnectInterface,
+} from "./RnWatchConnect.types";
 
-declare class RnWatchConnectModule<
-  T = Record<string, any>,
-> extends NativeModule<RnWatchConnectModuleEvents<T>> {
-  isWatchSupported: boolean;
-  isWatchPaired: boolean;
-  isWatchAppInstalled: boolean;
-  isWatchReachable: boolean;
-  watchActivationState: string;
-  sendMessage<T = { [key: string]: any }, R = { [key: string]: any }>(
+// Declare the native module class with our strict interface
+declare class RnWatchConnectModule
+  extends NativeModule<RnWatchConnectModuleEvents>
+  implements RnWatchConnectInterface
+{
+  readonly isWatchSupported: boolean;
+  readonly isWatchPaired: boolean;
+  readonly isWatchAppInstalled: boolean;
+  readonly isWatchReachable: boolean;
+  readonly watchActivationState: string;
+
+  sendMessage<T = Record<string, any>, R = Record<string, any>>(
     message: T
   ): Promise<R>;
-  sendMessageWithoutReply<T = { [key: string]: any }>(
-    message: T
-  ): Promise<void>;
-  replyToMessage(replyId: string, reply: { [key: string]: any }): void;
+  sendMessageWithoutReply<T = Record<string, any>>(message: T): Promise<void>;
+  replyToMessage(replyId: string, reply: Record<string, any>): void;
+  sendDataMessage(data: string): Promise<string>;
+  sendDataMessageWithoutReply(data: string): Promise<void>;
+  replyToDataMessage(replyId: string, response: string): void;
 }
 
 // This call loads the native module object from the JSI.
-export default requireNativeModule<RnWatchConnectModule>('RnWatchConnect');
+const module = requireNativeModule<RnWatchConnectModule>("RnWatchConnect");
+
+// Export the module with the strict interface type
+export default module as RnWatchConnectInterface;
