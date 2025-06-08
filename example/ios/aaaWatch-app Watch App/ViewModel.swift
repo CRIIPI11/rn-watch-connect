@@ -18,6 +18,8 @@ class WatchConnectivityViewModel: NSObject, ObservableObject {
   
   @Published var isReachable: Bool = false
   @Published var message: String = "No message received"
+  @Published var data: String = "No data received"
+  
   private override init() {
     super.init()
     activateSession()
@@ -40,6 +42,47 @@ class WatchConnectivityViewModel: NSObject, ObservableObject {
     
     WCSession.default.sendMessage(message, replyHandler: replyHandler, errorHandler: errorHandler)
   }
+
+  func sendMessageWithoutReply(_ message: [String: Any]) {
+    guard WCSession.default.isReachable else {
+      print("iPhone not reachable")
+      return
+    }
+    WCSession.default.sendMessage(message, replyHandler: nil)
+    { error in
+      print("Error sending message: \(error.localizedDescription)")
+    }
+  }
+
+  func sendDataMessage() {
+    guard WCSession.default.isReachable else {
+      print("iPhone not reachable")
+      let error = NSError(domain: "WatchConnectivity", code: 1, userInfo: [NSLocalizedDescriptionKey: "iPhone not reachable."])
+      print(error.localizedDescription)
+      return
+    }
+
+    WCSession.default.sendMessageData(Data(base64Encoded: "RGF0YSBNZXNzYWdlIHNlbnQgZnJvbSB3YXRjaA==")!, replyHandler: nil)
+    { error in
+      print("Error sending data message: \(error.localizedDescription)")
+    }
+  }
+
+  func sendDataMessageWithReply() {
+    guard WCSession.default.isReachable else {
+      print("iPhone not reachable")
+      let error = NSError(domain: "WatchConnectivity", code: 1, userInfo: [NSLocalizedDescriptionKey: "iPhone not reachable."])
+      print(error.localizedDescription)
+      return
+    }
+
+    WCSession.default.sendMessageData(Data(base64Encoded: "RGF0YSBNZXNzYWdlIHNlbnQgZnJvbSB3YXRjaCB3aXRoIHJlcGx5IGV4cGVjdGVk")!, replyHandler: { data in
+      print("Data message received: \(String(data: data, encoding: .utf8)!)")
+    })
+    { error in
+      print("Error sending data message: \(error.localizedDescription)")
+    }
+  }
   
 }
 
@@ -59,12 +102,41 @@ extension WatchConnectivityViewModel: WCSessionDelegate {
     }
   }
   
+  func session(_ session: WCSession, didReceiveMessage message: [String : Any]) {
+      print("didReceiveMessage: \(message)")
+  }
+  
 
   func session(_ session: WCSession, didReceiveMessage message: [String : Any], replyHandler: @escaping ([String : Any]) -> Void) {
     DispatchQueue.main.async {
       self.message = message["message"] as? String ?? "No message received"
     }
-    replyHandler(["message": "Message received"])
+    replyHandler(["message": "Message received on watch!"])
+  }
+
+  func session(_ session: WCSession, didReceiveMessageData messageData: Data, replyHandler: @escaping (Data) -> Void) {
+    DispatchQueue.main.async {
+      print("raw data: \(messageData) \(String(data: messageData, encoding: .utf8)!)")
+      guard let decodedString = String(data: messageData, encoding: .utf8) else {
+        self.data = "No data received"
+        
+        return
+      }
+      self.data = decodedString
+    }
+    replyHandler(Data(base64Encoded: "UmVzcG9uc2UgcmVjZWl2ZWQgaW4gd2F0Y2gh")!)
+  }
+
+  func session(_ session: WCSession, didReceiveMessageData messageData: Data) {
+    DispatchQueue.main.async {
+      print("raw data: \(messageData) \(String(data: messageData, encoding: .utf8)!)")
+      guard let decodedString = String(data: messageData, encoding: .utf8) else {
+        self.data = "No data received"
+        
+        return
+      }
+      self.data = decodedString
+    }
   }
   
 }

@@ -2,6 +2,8 @@ import { useEvent } from "expo";
 import RnWatchConnect, { useEventListener } from "rn-watch-connect";
 import { Button, SafeAreaView, ScrollView, Text, View } from "react-native";
 import { useState } from "react";
+import { Buffer } from "buffer";
+global.Buffer = Buffer;
 
 type MyMessage = {
   message: string;
@@ -34,6 +36,10 @@ export default function App() {
     }
   );
   const [messageReceived, setMessageReceived] = useState("");
+  const [messageWithReplyReceived, setMessageWithReplyReceived] = useState("");
+  const [dataMessageReceived, setDataMessageReceived] = useState("");
+  const [dataMessageWithReplyReceived, setDataMessageWithReplyReceived] =
+    useState("");
 
   useEventListener<MyMessage>(
     RnWatchConnect,
@@ -49,11 +55,39 @@ export default function App() {
     "onMessageWithReply",
     (event) => {
       console.log("Message With Reply:", event);
-      setMessageReceived(event.message.message);
+      setMessageWithReplyReceived(event.message.message);
 
       RnWatchConnect.replyToMessage(event.replyId, {
         response: "Hello ",
       });
+    }
+  );
+
+  useEventListener<{ data: string }>(
+    RnWatchConnect,
+    "onDataMessageReceived",
+    (event) => {
+      console.log(
+        "Data Message Received:",
+        event.data,
+        Buffer.from(event.data, "base64").toString()
+      );
+      setDataMessageReceived(Buffer.from(event.data, "base64").toString());
+    }
+  );
+
+  useEventListener<{ data: string; replyId: string }>(
+    RnWatchConnect,
+    "onDataMessageWithReply",
+    (event) => {
+      console.log("Data Message With Reply:", event);
+      setDataMessageWithReplyReceived(
+        Buffer.from(event.data, "base64").toString()
+      );
+      RnWatchConnect.replyToDataMessage(
+        event.replyId,
+        "TWVzc2FnZSByZWNlaXZlZCBvbiBSZWFjdCBOYXRpdmUh"
+      );
     }
   );
 
@@ -92,7 +126,7 @@ export default function App() {
                   MyMessage,
                   MyReply
                 >({
-                  message: "Hello from here",
+                  message: "Hello from React Native",
                 });
                 console.log("Reply:", reply);
               } catch (error) {
@@ -100,7 +134,49 @@ export default function App() {
               }
             }}
           />
+          <Button
+            title="Send Message Without Reply"
+            onPress={async () => {
+              try {
+                await RnWatchConnect.sendMessageWithoutReply({
+                  message: "Hello from React Native without reply",
+                });
+              } catch (error) {
+                console.log("Error:", error);
+              }
+            }}
+          />
+          <Text>{`Message With Reply Received: ${messageWithReplyReceived}`}</Text>
           <Text>{`Message Received: ${messageReceived}`}</Text>
+        </Group>
+        <Group name="Send Data Message">
+          <Button
+            title="Send Data Message"
+            onPress={async () => {
+              try {
+                const reply =
+                  await RnWatchConnect.sendDataMessage("VmV0ZW1lbnM=");
+
+                console.log("Reply:", Buffer.from(reply, "base64").toString());
+              } catch (error) {
+                console.log("Error:", error);
+              }
+            }}
+          />
+          <Text>{`Data Message With Reply Received: ${dataMessageWithReplyReceived}`}</Text>
+          <Text>{`Data Message Received: ${dataMessageReceived}`}</Text>
+          <Button
+            title="Send Data Message Without Reply"
+            onPress={async () => {
+              try {
+                await RnWatchConnect.sendDataMessageWithoutReply(
+                  "twFzZGVmZ2hpamts"
+                );
+              } catch (error) {
+                console.log("Error:", error);
+              }
+            }}
+          />
         </Group>
       </ScrollView>
     </SafeAreaView>
