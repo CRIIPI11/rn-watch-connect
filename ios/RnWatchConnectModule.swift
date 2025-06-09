@@ -13,23 +13,23 @@ public class RnWatchConnectModule: Module {
         
         // Properties
         Property("isWatchSupported") {
-            self.manager.isSupported
+            manager.isSupported
         }
         
         Property("isWatchPaired") {
-            self.manager.isPaired
+            manager.isPaired
         }
         
         Property("isWatchAppInstalled") {
-            self.manager.isAppInstalled
+            manager.isAppInstalled
         }
         
         Property("isWatchReachable") {
-            self.manager.isReachable
+            manager.isReachable
         }
         
         Property("watchActivationState") {
-            self.manager.activationState
+            manager.activationState
         }
         
         // Functions
@@ -57,19 +57,19 @@ public class RnWatchConnectModule: Module {
         }
         
         AsyncFunction("replyToMessage") { (replyId: String, response: [String: Any], promise: Promise) in
-            if let replyHandler = self.pendingReplies[replyId] {
+            if let replyHandler = pendingReplies[replyId] {
                 replyHandler(response)
-                self.pendingReplies.removeValue(forKey: replyId)
+                pendingReplies.removeValue(forKey: replyId)
             } else {
                 promise.reject(MessageError.invalidReplyId)
             }
         }
 
         AsyncFunction("replyToDataMessage") { (replyId: String, response: String, promise: Promise) in
-            if let replyHandler = self.pendingDataReplies[replyId] {
+            if let replyHandler = pendingDataReplies[replyId] {
                 let decodedData = try validateBase64(response)
                 replyHandler(decodedData)
-                self.pendingDataReplies.removeValue(forKey: replyId)
+                pendingDataReplies.removeValue(forKey: replyId)
             } else {
                 promise.reject(MessageError.invalidReplyId)
             }
@@ -119,38 +119,44 @@ public class RnWatchConnectModule: Module {
         OnStartObserving {
             
             manager.$isPaired
-                .sink { self.sendEvent("onWatchPairedChanged", ["isPaired": $0]) }
+                .sink { [weak self] value in
+                    self?.sendEvent("onWatchPairedChanged", ["isPaired": value])
+                }
                 .store(in: &cancellables)
             
             manager.$isAppInstalled
-                .sink { self.sendEvent("onWatchAppInstallChanged", ["isAppInstalled": $0]) }
+                .sink { [weak self] value in
+                    self?.sendEvent("onWatchAppInstallChanged", ["isAppInstalled": value])
+                }
                 .store(in: &cancellables)
             
             manager.$isReachable
-                .sink { self.sendEvent("onReachabilityChanged", ["isReachable": $0]) }
+                .sink { [weak self] value in
+                    self?.sendEvent("onReachabilityChanged", ["isReachable": value])
+                }
                 .store(in: &cancellables)
             
-            manager.messageReceivedHandler = { message in
-                self.sendEvent("onMessageReceived", message)
+            manager.messageReceivedHandler = { [weak self] message in
+                self?.sendEvent("onMessageReceived", message)
             }
             
-            manager.messageWithReplyHandler = { message, reply in
+            manager.messageWithReplyHandler = { [weak self] message, reply in
                 let replyId = UUID().uuidString
-                self.pendingReplies[replyId] = reply
-                self.sendEvent("onMessageWithReply", [
+                self?.pendingReplies[replyId] = reply
+                self?.sendEvent("onMessageWithReply", [
                     "message": message,
                     "replyId": replyId
                 ])
             }
 
-            manager.messageDataReceivedHandler = { data in
-                self.sendEvent("onDataMessageReceived", ["data": data.base64EncodedString()])
+            manager.messageDataReceivedHandler = { [weak self] data in
+                self?.sendEvent("onDataMessageReceived", ["data": data.base64EncodedString()])
             }
 
-            manager.messageDataWithReplyHandler = { data, reply in
+            manager.messageDataWithReplyHandler = { [weak self] data, reply in
                 let replyId = UUID().uuidString
-                self.pendingDataReplies[replyId] = reply
-                self.sendEvent("onDataMessageWithReply", [
+                self?.pendingDataReplies[replyId] = reply
+                self?.sendEvent("onDataMessageWithReply", [
                     "data": data.base64EncodedString(),
                     "replyId": replyId
                 ])
@@ -163,8 +169,8 @@ public class RnWatchConnectModule: Module {
             manager.messageWithReplyHandler = nil
             manager.messageDataReceivedHandler = nil
             manager.messageDataWithReplyHandler = nil
-            self.pendingReplies.removeAll()
-            self.pendingDataReplies.removeAll()
+            pendingReplies.removeAll()
+            pendingDataReplies.removeAll()
         }
     }
     
