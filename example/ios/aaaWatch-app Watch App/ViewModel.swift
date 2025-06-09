@@ -5,12 +5,9 @@
 //  Created by Cristhian Molina on 5/24/25.
 //
 
-
 import CoreMotion
 import Foundation
 import WatchConnectivity
-
-
 
 class WatchConnectivityViewModel: NSObject, ObservableObject {
   
@@ -83,7 +80,6 @@ class WatchConnectivityViewModel: NSObject, ObservableObject {
       print("Error sending data message: \(error.localizedDescription)")
     }
   }
-  
 }
 
 // MARK: - WCSessionDelegate
@@ -97,46 +93,42 @@ extension WatchConnectivityViewModel: WCSessionDelegate {
   }
   
   func sessionReachabilityDidChange(_ session: WCSession) {
-    DispatchQueue.main.async {
-      self.isReachable = session.isReachable
+    DispatchQueue.main.async { [weak self] in
+      self?.isReachable = session.isReachable
     }
   }
   
   func session(_ session: WCSession, didReceiveMessage message: [String : Any]) {
-      print("didReceiveMessage: \(message)")
+    print("didReceiveMessage: \(message)")
   }
-  
 
   func session(_ session: WCSession, didReceiveMessage message: [String : Any], replyHandler: @escaping ([String : Any]) -> Void) {
-    DispatchQueue.main.async {
-      self.message = message["message"] as? String ?? "No message received"
+    DispatchQueue.main.async { [weak self] in
+      self?.message = message["message"] as? String ?? "No message received"
     }
     replyHandler(["message": "Message received on watch!"])
   }
 
   func session(_ session: WCSession, didReceiveMessageData messageData: Data, replyHandler: @escaping (Data) -> Void) {
-    DispatchQueue.main.async {
+    DispatchQueue.main.async { [weak self] in
       print("raw data: \(messageData) \(String(data: messageData, encoding: .utf8)!)")
       guard let decodedString = String(data: messageData, encoding: .utf8) else {
-        self.data = "No data received"
-        
+        self?.data = "No data received"
         return
       }
-      self.data = decodedString
+      self?.data = decodedString
     }
     replyHandler(Data(base64Encoded: "UmVzcG9uc2UgcmVjZWl2ZWQgaW4gd2F0Y2gh")!)
   }
 
   func session(_ session: WCSession, didReceiveMessageData messageData: Data) {
-    DispatchQueue.main.async {
+    DispatchQueue.main.async { [weak self] in
       print("raw data: \(messageData) \(String(data: messageData, encoding: .utf8)!)")
       guard let decodedString = String(data: messageData, encoding: .utf8) else {
-        self.data = "No data received"
-        
+        self?.data = "No data received"
         return
       }
-      self.data = decodedString
+      self?.data = decodedString
     }
   }
-  
 }
