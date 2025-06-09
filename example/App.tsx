@@ -154,8 +154,9 @@ export default function App() {
             title="Send Data Message"
             onPress={async () => {
               try {
-                const reply =
-                  await RnWatchConnect.sendDataMessage("VmV0ZW1lbnM=");
+                const reply = await RnWatchConnect.sendDataMessage(
+                  "RGF0YSBtZXNzYWdlIHNlbnQgZnJvbSBpcGhvbmU="
+                );
 
                 console.log("Reply:", Buffer.from(reply, "base64").toString());
               } catch (error) {
@@ -170,7 +171,7 @@ export default function App() {
             onPress={async () => {
               try {
                 await RnWatchConnect.sendDataMessageWithoutReply(
-                  "twFzZGVmZ2hpamts"
+                  "RGF0YSBtZXNzYWdlIHNlbnQgZnJvbSBpcGhvbmUgd2l0aG91dCByZXBseQ=="
                 );
               } catch (error) {
                 console.log("Error:", error);
