@@ -16,6 +16,8 @@ declare class RnWatchConnectModule
   readonly isWatchAppInstalled: boolean;
   readonly isWatchReachable: boolean;
   readonly watchActivationState: string;
+  readonly applicationContext: any;
+  readonly receivedApplicationContext: any;
 
   // Message Methods
   sendMessage<T = Record<string, any>, R = Record<string, any>>(
@@ -26,6 +28,7 @@ declare class RnWatchConnectModule
   sendDataMessage(data: string): Promise<string>;
   sendDataMessageWithoutReply(data: string): Promise<void>;
   replyToDataMessage(replyId: string, response: string): void;
+  updateApplicationContext(applicationContext: any): Promise<void>;
 }
 
 // This call loads the native module object from the JSI.

@@ -32,6 +32,14 @@ public class RnWatchConnectModule: Module {
             manager.activationState
         }
         
+        Property("applicationContext") {
+            WCSession.default.applicationContext
+        }
+        
+        Property("receivedApplicationContext") {
+            WCSession.default.receivedApplicationContext
+        }
+        
         // Functions
         
         AsyncFunction("sendMessage") { (message: [String: Any], promise: Promise) in
@@ -105,6 +113,16 @@ public class RnWatchConnectModule: Module {
             }
         }
         
+        AsyncFunction("updateApplicationContext") { (applicationContext: [String: Any], promise: Promise) in
+            
+            do {
+                try WCSession.default.updateApplicationContext(applicationContext)
+            } catch {
+                print("❌ Failed to update application context: \(error.localizedDescription)")
+                promise.reject(error)
+            }
+        }
+
         // Events
         Events(
             "onWatchPairedChanged",
@@ -113,7 +131,8 @@ public class RnWatchConnectModule: Module {
             "onMessageReceived",
             "onMessageWithReply",
             "onDataMessageReceived",
-            "onDataMessageWithReply"
+            "onDataMessageWithReply",
+            "onApplicationContextChanged"
         )
         
         OnStartObserving {
@@ -161,6 +180,11 @@ public class RnWatchConnectModule: Module {
                     "replyId": replyId
                 ])
             }
+
+            manager.$applicationContext.sink { [weak self] applicationContext in
+                self?.sendEvent("onApplicationContextChanged", applicationContext)
+            }
+            .store(in: &cancellables)
         }
         
         OnStopObserving {

@@ -16,6 +16,7 @@ class WatchConnectivityViewModel: NSObject, ObservableObject {
   @Published var isReachable: Bool = false
   @Published var message: String = "No message received"
   @Published var data: String = "No data received"
+  @Published var applicationContext: [String: Any] = [:]
   
   private override init() {
     super.init()
@@ -131,4 +132,12 @@ extension WatchConnectivityViewModel: WCSessionDelegate {
       self?.data = decodedString
     }
   }
+  
+  func session(_ session: WCSession, didReceiveApplicationContext applicationContext: [String : Any]) {
+      print("didReceiveApplicationContext: \(applicationContext)")
+      DispatchQueue.main.async { [weak self] in
+        self?.applicationContext = applicationContext
+      }
+  }
+  
 }

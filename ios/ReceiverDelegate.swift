@@ -83,6 +83,12 @@ extension RnWatchConnectManager: WCSessionDelegate {
       }
     }
     
+    func session(_ session: WCSession, didReceiveApplicationContext applicationContext: [String : Any]) {
+        DispatchQueue.main.async { [weak self] in
+            self?.applicationContext = applicationContext
+        }
+    }
+    
     func sessionDidBecomeInactive(_ session: WCSession) {
         // Handle session becoming inactive
         stateQueue.async { [weak self] in

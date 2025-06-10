@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import WatchConnectivity
 
 struct ContentView: View {
   @ObservedObject private var viewModel = WatchConnectivityViewModel.shared
@@ -46,6 +47,25 @@ struct ContentView: View {
           viewModel.sendDataMessageWithReply()
         }
       }
+      
+      Section(header: Text("Application Context")) {
+        Text("application context: \(viewModel.applicationContext)")
+          .font(.subheadline)
+        Text("application context from session: \(WCSession.default.receivedApplicationContext)")
+          .font(.subheadline)
+        Text("sent application context: \(WCSession.default.applicationContext)")
+          .font(.subheadline)
+          
+        Button("Send Data Message") {
+          do {
+            try WCSession.default.updateApplicationContext(["theme": "dark"])
+          } catch {
+            print("❌ Failed to update application context: \(error.localizedDescription)")
+          }
+        }
+      }
+      
+
     }
   }
 }

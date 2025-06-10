@@ -17,6 +17,8 @@ export type RnWatchConnectModuleEvents = {
   onDataMessageReceived: (messageData: { data: string }) => void;
   /** Triggered when a data message requiring a reply is received from the Watch */
   onDataMessageWithReply: (params: { data: string; replyId: string }) => void;
+  /** Triggered when the application context changes */
+  onApplicationContextChanged: (params: { applicationContext: any }) => void;
 };
 
 // Define the strict interface for the module
@@ -28,6 +30,8 @@ export interface RnWatchConnectInterface
   readonly isWatchAppInstalled: boolean;
   readonly isWatchReachable: boolean;
   readonly watchActivationState: string;
+  readonly applicationContext: any;
+  readonly receivedApplicationContext: any;
 
   // Message Methods
   /**
@@ -68,4 +72,10 @@ export interface RnWatchConnectInterface
    * @param response - The base64 encoded string to send as a reply
    */
   replyToDataMessage(replyId: string, response: string): void;
+
+  /**
+   * Updates the application context on the Watch.
+   * @param applicationContext - The application context to update
+   */
+  updateApplicationContext(applicationContext: any): Promise<void>;
 }

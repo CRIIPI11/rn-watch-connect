@@ -40,7 +40,7 @@ export default function App() {
   const [dataMessageReceived, setDataMessageReceived] = useState("");
   const [dataMessageWithReplyReceived, setDataMessageWithReplyReceived] =
     useState("");
-
+  const [applicationContext, setApplicationContext] = useState<any>(null);
   useEventListener(RnWatchConnect, "onMessageReceived", (event: MyMessage) => {
     console.log("Message Received:", event);
     setMessageReceived(event.message);
@@ -73,6 +73,11 @@ export default function App() {
       event.replyId,
       "TWVzc2FnZSByZWNlaXZlZCBvbiBSZWFjdCBOYXRpdmUh"
     );
+  });
+
+  useEventListener(RnWatchConnect, "onApplicationContextChanged", (event) => {
+    console.log("ApplicationContext Changed:", event);
+    setApplicationContext(event);
   });
 
   return (
@@ -157,6 +162,21 @@ export default function App() {
                 await RnWatchConnect.sendDataMessageWithoutReply(
                   "RGF0YSBtZXNzYWdlIHNlbnQgZnJvbSBpcGhvbmUgd2l0aG91dCByZXBseQ=="
                 );
+              } catch (error) {
+                console.log("Error:", error);
+              }
+            }}
+          />
+        </Group>
+        <Group name="ApplicationContext">
+          <Text>{`ApplicationContext: ${JSON.stringify(applicationContext)}`}</Text>
+          <Button
+            title="Update Application Context"
+            onPress={async () => {
+              try {
+                await RnWatchConnect.updateApplicationContext({
+                  theme: "blue",
+                });
               } catch (error) {
                 console.log("Error:", error);
               }
