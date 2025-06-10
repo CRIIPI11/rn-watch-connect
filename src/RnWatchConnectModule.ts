@@ -28,7 +28,9 @@ declare class RnWatchConnectModule
   sendDataMessage(data: string): Promise<string>;
   sendDataMessageWithoutReply(data: string): Promise<void>;
   replyToDataMessage(replyId: string, response: string): void;
-  updateApplicationContext(applicationContext: any): Promise<void>;
+  updateApplicationContext<T = Record<string, any>>(
+    applicationContext: T
+  ): Promise<void>;
 }
 
 // This call loads the native module object from the JSI.

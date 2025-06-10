@@ -18,7 +18,7 @@ export type RnWatchConnectModuleEvents = {
   /** Triggered when a data message requiring a reply is received from the Watch */
   onDataMessageWithReply: (params: { data: string; replyId: string }) => void;
   /** Triggered when the application context changes */
-  onApplicationContextChanged: (params: { applicationContext: any }) => void;
+  onApplicationContextChanged: (params: any) => void;
 };
 
 // Define the strict interface for the module
@@ -39,12 +39,14 @@ export interface RnWatchConnectInterface
    * @param message - The message to send
    * @returns A promise that resolves with the Watch's reply
    */
-  sendMessage<T = MessagePayload, R = MessagePayload>(message: T): Promise<R>;
+  sendMessage<T extends MessagePayload, R extends MessagePayload>(
+    message: T
+  ): Promise<R>;
   /**
    * Sends a message to the Watch without waiting for a reply.
    * @param message - The message to send
    */
-  sendMessageWithoutReply<T = MessagePayload>(message: T): Promise<void>;
+  sendMessageWithoutReply<T extends MessagePayload>(message: T): Promise<void>;
   /**
    * Sends a reply to a message received from the Watch.
    * @param replyId - The ID of the message to reply to
@@ -77,5 +79,7 @@ export interface RnWatchConnectInterface
    * Updates the application context on the Watch.
    * @param applicationContext - The application context to update
    */
-  updateApplicationContext(applicationContext: any): Promise<void>;
+  updateApplicationContext<T extends Record<string, any>>(
+    applicationContext: T
+  ): Promise<void>;
 }

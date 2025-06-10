@@ -41,6 +41,7 @@ export default function App() {
   const [dataMessageWithReplyReceived, setDataMessageWithReplyReceived] =
     useState("");
   const [applicationContext, setApplicationContext] = useState<any>(null);
+
   useEventListener(RnWatchConnect, "onMessageReceived", (event: MyMessage) => {
     console.log("Message Received:", event);
     setMessageReceived(event.message);
@@ -175,7 +176,7 @@ export default function App() {
             onPress={async () => {
               try {
                 await RnWatchConnect.updateApplicationContext({
-                  theme: "blue",
+                  theme: "red",
                 });
               } catch (error) {
                 console.log("Error:", error);
