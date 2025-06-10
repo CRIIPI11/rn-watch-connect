@@ -1,8 +1,8 @@
-# rn-watch-connect
+# ⌚️📱 rn-watch-connect
 
 A React Native module that enables seamless communication between an iOS app and its paired Apple Watch using WatchConnectivity. It provides an easy-to-use interface for sending messages, transferring files, syncing data, and monitoring connection status between the iPhone and Apple Watch.
 
-## Installation
+## 🚀 Installation
 
 ```bash
 npm install rn-watch-connect
@@ -10,7 +10,7 @@ npm install rn-watch-connect
 yarn add rn-watch-connect
 ```
 
-## Features
+## ✨ Features
 
 - Send messages between iPhone and Apple Watch
 - Monitor watch connectivity status
@@ -18,7 +18,7 @@ yarn add rn-watch-connect
 - Event-based communication
 - Promise-based message sending with reply support
 
-## API Reference
+## 📚 API Reference
 
 ### Properties
 
