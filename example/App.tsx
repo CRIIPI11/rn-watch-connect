@@ -1,5 +1,5 @@
-import { useEvent } from "expo";
-import RnWatchConnect, { useEventListener } from "rn-watch-connect";
+import { useEvent, useEventListener } from "expo";
+import RnWatchConnect from "rn-watch-connect";
 import { Button, SafeAreaView, ScrollView, Text, View } from "react-native";
 import { useState } from "react";
 import { Buffer } from "buffer";
@@ -41,55 +41,39 @@ export default function App() {
   const [dataMessageWithReplyReceived, setDataMessageWithReplyReceived] =
     useState("");
 
-  useEventListener<MyMessage>(
-    RnWatchConnect,
-    "onMessageReceived",
-    ({ message }) => {
-      console.log("Message Received:", message);
-      setMessageReceived(message);
-    }
-  );
+  useEventListener(RnWatchConnect, "onMessageReceived", (event: MyMessage) => {
+    console.log("Message Received:", event);
+    setMessageReceived(event.message);
+  });
 
-  useEventListener<{ message: MyMessage; replyId: string }>(
-    RnWatchConnect,
-    "onMessageWithReply",
-    (event) => {
-      console.log("Message With Reply:", event);
-      setMessageWithReplyReceived(event.message.message);
+  useEventListener(RnWatchConnect, "onMessageWithReply", (event) => {
+    console.log("Message With Reply:", event);
+    setMessageWithReplyReceived(event.message.message);
 
-      RnWatchConnect.replyToMessage(event.replyId, {
-        response: "Hello ",
-      });
-    }
-  );
+    RnWatchConnect.replyToMessage(event.replyId, {
+      response: "Hello ",
+    });
+  });
 
-  useEventListener<{ data: string }>(
-    RnWatchConnect,
-    "onDataMessageReceived",
-    (event) => {
-      console.log(
-        "Data Message Received:",
-        event.data,
-        Buffer.from(event.data, "base64").toString()
-      );
-      setDataMessageReceived(Buffer.from(event.data, "base64").toString());
-    }
-  );
+  useEventListener(RnWatchConnect, "onDataMessageReceived", (event) => {
+    console.log(
+      "Data Message Received:",
+      event.data,
+      Buffer.from(event.data, "base64").toString()
+    );
+    setDataMessageReceived(Buffer.from(event.data, "base64").toString());
+  });
 
-  useEventListener<{ data: string; replyId: string }>(
-    RnWatchConnect,
-    "onDataMessageWithReply",
-    (event) => {
-      console.log("Data Message With Reply:", event);
-      setDataMessageWithReplyReceived(
-        Buffer.from(event.data, "base64").toString()
-      );
-      RnWatchConnect.replyToDataMessage(
-        event.replyId,
-        "TWVzc2FnZSByZWNlaXZlZCBvbiBSZWFjdCBOYXRpdmUh"
-      );
-    }
-  );
+  useEventListener(RnWatchConnect, "onDataMessageWithReply", (event) => {
+    console.log("Data Message With Reply:", event);
+    setDataMessageWithReplyReceived(
+      Buffer.from(event.data, "base64").toString()
+    );
+    RnWatchConnect.replyToDataMessage(
+      event.replyId,
+      "TWVzc2FnZSByZWNlaXZlZCBvbiBSZWFjdCBOYXRpdmUh"
+    );
+  });
 
   return (
     <SafeAreaView style={styles.container}>

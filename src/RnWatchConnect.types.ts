@@ -2,7 +2,7 @@ import { EventEmitter } from "expo";
 
 export type MessagePayload = Record<string, any>;
 
-export type RnWatchConnectModuleEvents<T = MessagePayload> = {
+export type RnWatchConnectModuleEvents = {
   /** Triggered when the Watch's reachability status changes */
   onReachabilityChanged: (params: { isWatchReachable: boolean }) => void;
   /** Triggered when the Watch app installation status changes */
@@ -10,16 +10,14 @@ export type RnWatchConnectModuleEvents<T = MessagePayload> = {
   /** Triggered when the Watch pairing status changes */
   onWatchPairedChanged: (params: { isWatchPaired: boolean }) => void;
   /** Triggered when a message is received from the Watch */
-  onMessageReceived: (message: T) => void;
+  onMessageReceived: (message: any) => void;
   /** Triggered when a message requiring a reply is received from the Watch */
-  onMessageWithReply: (params: { message: T; replyId: string }) => void;
+  onMessageWithReply: (params: { message: any; replyId: string }) => void;
   /** Triggered when a data message is received from the Watch */
   onDataMessageReceived: (messageData: { data: string }) => void;
   /** Triggered when a data message requiring a reply is received from the Watch */
   onDataMessageWithReply: (params: { data: string; replyId: string }) => void;
 };
-
-export type EventListener<T = MessagePayload> = (event: T) => void;
 
 // Define the strict interface for the module
 export interface RnWatchConnectInterface
