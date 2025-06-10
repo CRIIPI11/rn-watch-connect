@@ -22,15 +22,17 @@ yarn add rn-watch-connect
 
 ### Properties
 
-| Property               | Type      | Description                                                |
-| ---------------------- | --------- | ---------------------------------------------------------- |
-| `isWatchSupported`     | `boolean` | Indicates if the device supports Watch Connectivity        |
-| `isWatchPaired`        | `boolean` | Indicates if an Apple Watch is paired with the device      |
-| `isWatchAppInstalled`  | `boolean` | Indicates if the Watch app is installed                    |
-| `isWatchReachable`     | `boolean` | Indicates if the paired Watch is currently reachable       |
-| `watchActivationState` | `string`  | Current activation state of the Watch Connectivity session |
+| Property                     | Type      | Description                                                |
+| ---------------------------- | --------- | ---------------------------------------------------------- |
+| `isWatchSupported`           | `boolean` | Indicates if the device supports Watch Connectivity        |
+| `isWatchPaired`              | `boolean` | Indicates if an Apple Watch is paired with the device      |
+| `isWatchAppInstalled`        | `boolean` | Indicates if the Watch app is installed                    |
+| `isWatchReachable`           | `boolean` | Indicates if the paired Watch is currently reachable       |
+| `watchActivationState`       | `string`  | Current activation state of the Watch Connectivity session |
+| `applicationContext`         | `any`     | Current application context                                |
+| `receivedApplicationContext` | `any`     | Received application context from the Watch                |
 
-## Methods
+## 📡 Methods
 
 #### `sendMessage<T, R>(message: T): Promise<R>`
 
@@ -195,7 +197,23 @@ RnWatchConnect.replyToDataMessage(
 );
 ```
 
-## Events
+#### `updateApplicationContext<T>(applicationContext: T): Promise<void>`
+
+Updates the application context on the Watch.
+
+**Parameters:**
+
+- `applicationContext`: The application context to update (defaults to `Record<string, any>`)
+
+**Example:**
+
+```typescript
+await RnWatchConnect.updateApplicationContext({
+  theme: "red",
+});
+```
+
+## 📡 Events
 
 #### `onMessageReceived`
 
@@ -305,6 +323,21 @@ useEventListener(
 );
 ```
 
+#### `onApplicationContextChanged`
+
+Triggered when the application context changes.
+
+**Example:**
+
+```typescript
+useEventListener(
+  RnWatchConnect,
+  "onApplicationContextChanged",
+  (applicationContext) =>
+    console.log("Application context changed:", applicationContext)
+);
+```
+
 ## TypeScript Support
 
 The module is fully typed and supports generic types for messages and replies. You can define your own types for messages and replies:
@@ -325,15 +358,9 @@ type MyReply = {
 const reply = await RnWatchConnect.sendMessage<MyMessage, MyReply>({
   message: "Hello",
 });
-
-// Or in event listeners
-useEventListener<MyMessage>(RnWatchConnect, "onMessageReceived", (message) => {
-  // TypeScript knows the shape of message
-  console.log(message.message);
-});
 ```
 
-## Example
+## 📝 Example
 
 ```typescript
 import RnWatchConnect, { useEventListener } from "rn-watch-connect";
@@ -374,6 +401,6 @@ function App() {
 }
 ```
 
-## License
+## 📄 License
 
 MIT
