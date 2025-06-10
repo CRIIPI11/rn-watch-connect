@@ -10,12 +10,14 @@ declare class RnWatchConnectModule
   extends NativeModule<RnWatchConnectModuleEvents>
   implements RnWatchConnectInterface
 {
+  // Properties
   readonly isWatchSupported: boolean;
   readonly isWatchPaired: boolean;
   readonly isWatchAppInstalled: boolean;
   readonly isWatchReachable: boolean;
   readonly watchActivationState: string;
 
+  // Message Methods
   sendMessage<T = Record<string, any>, R = Record<string, any>>(
     message: T
   ): Promise<R>;
