@@ -41,6 +41,7 @@ export default function App() {
   const [dataMessageWithReplyReceived, setDataMessageWithReplyReceived] =
     useState("");
   const [applicationContext, setApplicationContext] = useState<any>(null);
+  const [userInfo, setUserInfo] = useState<any>(null);
 
   useEventListener(RnWatchConnect, "onMessageReceived", (event: MyMessage) => {
     console.log("Message Received:", event);
@@ -79,6 +80,11 @@ export default function App() {
   useEventListener(RnWatchConnect, "onApplicationContextChanged", (event) => {
     console.log("ApplicationContext Changed:", event);
     setApplicationContext(event);
+  });
+
+  useEventListener(RnWatchConnect, "onUserInfoReceived", (event) => {
+    console.log("User Info Received:", event);
+    setUserInfo(event);
   });
 
   return (
@@ -181,6 +187,19 @@ export default function App() {
               } catch (error) {
                 console.log("Error:", error);
               }
+            }}
+          />
+        </Group>
+        <Group name="User Info">
+          <Text>{`User Info: ${JSON.stringify(userInfo)}`}</Text>
+          <Button
+            title="Transfer User Info"
+            onPress={async () => {
+              RnWatchConnect.transferUserInfo({
+                name: `User`,
+                age: 20,
+                timestamp: Date.now(),
+              });
             }}
           />
         </Group>

@@ -66,6 +66,14 @@ struct ContentView: View {
       }
       
 
+      Section(header: Text("User Info")) {
+        Text("user info: \(viewModel.userInfo)")
+          .font(.subheadline) 
+        Button("Transfer User Info") {
+          WCSession.default.transferUserInfo(["name": "John", "age": 30])
+        }
+      }
+        
     }
   }
 }
