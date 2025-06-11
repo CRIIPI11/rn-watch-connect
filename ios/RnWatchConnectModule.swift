@@ -40,6 +40,18 @@ public class RnWatchConnectModule: Module {
             WCSession.default.receivedApplicationContext
         }
         
+        Property("outstandingUserInfoTransfers") {
+            var transfers: [Any] = []
+            for transfer in WCSession.default.outstandingUserInfoTransfers {
+                transfers.append([
+                    "id": String(ObjectIdentifier(transfer).hashValue),
+                    "userInfo": transfer.userInfo,
+                    "isTransferring": transfer.isTransferring
+                ])
+            }
+            return transfers
+        }
+        
         // Functions
         
         AsyncFunction("sendMessage") { (message: [String: Any], promise: Promise) in
@@ -123,6 +135,24 @@ public class RnWatchConnectModule: Module {
             }
         }
 
+        Function("transferUserInfo") { (userInfo: [String: Any]) in
+           let transfer = WCSession.default.transferUserInfo(userInfo)
+            print(transfer.userInfo)
+            return [
+                "id": String(ObjectIdentifier(transfer).hashValue),
+                "isTransferring": transfer.isTransferring
+            ]
+        }
+
+        AsyncFunction("cancelUserInfoTransfer") { (transferId: String, promise: Promise) in
+            guard let transfer = WCSession.default.outstandingUserInfoTransfers.first(where: { String(ObjectIdentifier($0).hashValue) == transferId }) else {
+                promise.reject(UserInfoTransferError.invalidTransferId)
+                return
+            }
+            transfer.cancel()
+            promise.resolve(nil)
+        }
+        
         // Events
         Events(
             "onWatchPairedChanged",
@@ -132,7 +162,8 @@ public class RnWatchConnectModule: Module {
             "onMessageWithReply",
             "onDataMessageReceived",
             "onDataMessageWithReply",
-            "onApplicationContextChanged"
+            "onApplicationContextChanged",
+            "onUserInfoReceived"
         )
         
         OnStartObserving {
@@ -183,6 +214,11 @@ public class RnWatchConnectModule: Module {
 
             manager.$applicationContext.sink { [weak self] applicationContext in
                 self?.sendEvent("onApplicationContextChanged", applicationContext)
+            }
+            .store(in: &cancellables)
+
+            manager.$userInfo.sink { [weak self] userInfo in
+                self?.sendEvent("onUserInfoReceived", userInfo)
             }
             .store(in: &cancellables)
         }

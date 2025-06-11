@@ -18,6 +18,7 @@ class RnWatchConnectManager: NSObject {
     @Published var isAppInstalled: Bool = false
     @Published var isReachable: Bool = false
     @Published var applicationContext: [String: Any] = [:]
+    @Published var userInfo: [String: Any] = [:]
     
     var isSupported: Bool {
         WCSession.isSupported()

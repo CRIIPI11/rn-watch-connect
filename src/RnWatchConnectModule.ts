@@ -3,6 +3,8 @@ import { NativeModule, requireNativeModule } from "expo";
 import {
   RnWatchConnectModuleEvents,
   RnWatchConnectInterface,
+  OutstandingUserInfoTransfer,
+  UserInfoTransfer,
 } from "./RnWatchConnect.types";
 
 // Declare the native module class with our strict interface
@@ -18,6 +20,7 @@ declare class RnWatchConnectModule
   readonly watchActivationState: string;
   readonly applicationContext: any;
   readonly receivedApplicationContext: any;
+  readonly outstandingUserInfoTransfers: OutstandingUserInfoTransfer[];
 
   // Message Methods
   sendMessage<T = Record<string, any>, R = Record<string, any>>(
@@ -31,6 +34,8 @@ declare class RnWatchConnectModule
   updateApplicationContext<T = Record<string, any>>(
     applicationContext: T
   ): Promise<void>;
+  transferUserInfo<T = Record<string, any>>(userInfo: T): UserInfoTransfer;
+  cancelUserInfoTransfer(transferId: string): Promise<void>;
 }
 
 // This call loads the native module object from the JSI.

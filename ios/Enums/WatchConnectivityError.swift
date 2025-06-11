@@ -59,3 +59,14 @@ enum MessageError: LocalizedError {
         }
     }
 }
+
+enum UserInfoTransferError: LocalizedError {
+    case invalidTransferId
+
+    var errorDescription: String? {
+        switch self {
+            case .invalidTransferId:
+                return "Invalid transfer ID"
+        }
+    }
+}

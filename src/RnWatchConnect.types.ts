@@ -2,6 +2,17 @@ import { EventEmitter } from "expo";
 
 export type MessagePayload = Record<string, any>;
 
+export type OutstandingUserInfoTransfer = {
+  id: string;
+  userInfo: Record<string, any>;
+  isTransferring: boolean;
+};
+
+export type UserInfoTransfer = {
+  id: string;
+  isTransferring: boolean;
+};
+
 export type RnWatchConnectModuleEvents = {
   /** Triggered when the Watch's reachability status changes */
   onReachabilityChanged: (params: { isWatchReachable: boolean }) => void;
@@ -19,6 +30,8 @@ export type RnWatchConnectModuleEvents = {
   onDataMessageWithReply: (params: { data: string; replyId: string }) => void;
   /** Triggered when the application context changes */
   onApplicationContextChanged: (params: any) => void;
+  /** Triggered when user info is received from the Watch */
+  onUserInfoReceived: (params: any) => void;
 };
 
 // Define the strict interface for the module
@@ -32,6 +45,7 @@ export interface RnWatchConnectInterface
   readonly watchActivationState: string;
   readonly applicationContext: any;
   readonly receivedApplicationContext: any;
+  readonly outstandingUserInfoTransfers: OutstandingUserInfoTransfer[];
 
   // Message Methods
   /**
@@ -53,6 +67,12 @@ export interface RnWatchConnectInterface
    * @param reply - The message to send as a reply
    */
   replyToMessage(replyId: string, reply: MessagePayload): void;
+
+  /**
+   * Cancels a pending user info transfer.
+   * @param transferId - The ID of the transfer to cancel
+   */
+  cancelUserInfoTransfer(transferId: string): Promise<void>;
 
   // Data Message Methods
   /**
@@ -82,4 +102,13 @@ export interface RnWatchConnectInterface
   updateApplicationContext<T extends Record<string, any>>(
     applicationContext: T
   ): Promise<void>;
+
+  /**
+   * Transfers user info to the Watch.
+   * @param userInfo - The user info to transfer
+   * @returns A promise that resolves with the transfer ID and isTransferring status: { id: string, isTransferring: boolean }
+   */
+  transferUserInfo<T extends Record<string, any>>(
+    userInfo: T
+  ): UserInfoTransfer;
 }
