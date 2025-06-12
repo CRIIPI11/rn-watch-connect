@@ -8,6 +8,21 @@
 import CoreMotion
 import Foundation
 import WatchConnectivity
+import SwiftUI
+
+// Add ReceivedFile structure
+struct ReceivedFile {
+    let name: String
+    let size: Int64
+    let url: URL
+    
+    var sizeString: String {
+        let formatter = ByteCountFormatter()
+        formatter.allowedUnits = [.useMB, .useKB, .useBytes]
+        formatter.countStyle = .file
+        return formatter.string(fromByteCount: size)
+    }
+}
 
 class WatchConnectivityViewModel: NSObject, ObservableObject {
   
@@ -18,6 +33,7 @@ class WatchConnectivityViewModel: NSObject, ObservableObject {
   @Published var data: String = "No data received"
   @Published var applicationContext: [String: Any] = [:]  
   @Published var userInfo: [String: Any] = [:]
+  @Published var receivedFiles: [ReceivedFile] = []
   
   private override init() {
     super.init()
@@ -81,6 +97,39 @@ class WatchConnectivityViewModel: NSObject, ObservableObject {
     { error in
       print("Error sending data message: \(error.localizedDescription)")
     }
+  }
+
+  func sendFile() {
+    guard WCSession.default.isReachable else {
+      print("iPhone not reachable")
+      return
+    }
+
+    // 1. Get caches directory
+    guard let cachesDirectory = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first else {
+      print("❌ Could not find caches directory.")
+      return
+    }
+    
+    // 2. Create a file URL
+    let fileName = "TestFileFromWatch.txt"
+    let fileURL = cachesDirectory.appendingPathComponent(fileName)
+    
+    // 3. Content to write
+    let fileContent = "Hello from Apple Watch! 🖐️⌚️"
+    
+    // 4. Write content to the file
+    do {
+      try fileContent.write(to: fileURL, atomically: true, encoding: .utf8)
+      print("✅ File written successfully at \(fileURL.path)")
+    } catch {
+      print("❌ Error writing file: \(error.localizedDescription)")
+      return
+    }
+
+    // 5. Transfer the file
+    WCSession.default.transferFile(fileURL, metadata: ["name": fileName, "size": fileContent.count])
+
   }
 }
 
@@ -146,6 +195,44 @@ extension WatchConnectivityViewModel: WCSessionDelegate {
     DispatchQueue.main.async { [weak self] in
       self?.userInfo = userInfo
     }
+  }
+
+  func session(_ session: WCSession, didReceive file: WCSessionFile) {
+    
+     // Get the file metadata
+     let metadata = file.metadata ?? [:]
+     let fileName = metadata["name"] as? String ?? "Unknown File"
+     let fileSize = metadata["size"] as? Int64 ?? 0
+    
+    print("Received file: \(fileName) (Size: \(fileSize) bytes) Local URL: \(file.fileURL.absoluteString)")
+    
+     // Handle the file based on your needs
+     do {
+       // Get the temporary URL where WatchConnectivity stored the file
+       let receivedFileURL = file.fileURL
+      
+       // Create a URL in the Watch app's documents directory
+       let documentsURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+       let destinationURL = documentsURL.appendingPathComponent(fileName)
+      
+       // Move the file to the documents directory
+       if FileManager.default.fileExists(atPath: destinationURL.path) {
+         try FileManager.default.removeItem(at: destinationURL)
+       }
+       try FileManager.default.moveItem(at: receivedFileURL, to: destinationURL)
+      
+       print("File saved successfully at: \(destinationURL.path)")
+      
+       // Create a ReceivedFile object and update the UI
+       let receivedFile = ReceivedFile(name: fileName, size: fileSize, url: destinationURL)
+      
+       // Update UI on main thread
+       DispatchQueue.main.async { [weak self] in
+         self?.receivedFiles.append(receivedFile)
+       }
+     } catch {
+       print("❌ Error handling received file: \(error.localizedDescription)")
+     }
   }
   
 }

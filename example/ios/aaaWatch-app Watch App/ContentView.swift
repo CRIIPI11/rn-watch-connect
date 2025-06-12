@@ -73,6 +73,28 @@ struct ContentView: View {
           WCSession.default.transferUserInfo(["name": "John", "age": 30])
         }
       }
+      
+       Section(header: Text("Received Files")) {
+         if viewModel.receivedFiles.isEmpty {
+           Text("No files received")
+             .font(.subheadline)
+             .foregroundColor(.secondary)
+         } else {
+           ForEach(viewModel.receivedFiles, id: \.name) { file in
+             VStack(alignment: .leading) {
+               Text(file.name)
+                 .font(.headline)
+               Text(file.sizeString)
+                 .font(.caption)
+                 .foregroundColor(.secondary)
+             }
+           }
+         }
+
+         Button("Send File") {
+          viewModel.sendFile()
+         }
+       }
         
     }
   }
