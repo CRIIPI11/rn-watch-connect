@@ -37,7 +37,9 @@ declare class RnWatchConnectModule
     applicationContext: T
   ): Promise<void>;
   transferUserInfo<T = Record<string, any>>(userInfo: T): UserInfoTransfer;
-  cancelUserInfoTransfer(transferId: string): Promise<void>;
+  cancelUserInfoTransfer(transferId: string): {
+    id: string;
+  };
   transferFile(file: string, metadata?: Record<string, any>): FileTransfer;
   cancelFileTransfer(transferId: string): {
     id: string;

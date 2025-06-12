@@ -157,20 +157,22 @@ public class RnWatchConnectModule: Module {
 
         Function("transferUserInfo") { (userInfo: [String: Any]) in
            let transfer = WCSession.default.transferUserInfo(userInfo)
-            print(transfer.userInfo)
             return [
                 "id": String(ObjectIdentifier(transfer).hashValue),
                 "isTransferring": transfer.isTransferring
             ]
         }
 
-        AsyncFunction("cancelUserInfoTransfer") { (transferId: String, promise: Promise) in
+        Function("cancelUserInfoTransfer") { (transferId: String) in
             guard let transfer = WCSession.default.outstandingUserInfoTransfers.first(where: { String(ObjectIdentifier($0).hashValue) == transferId }) else {
-                promise.reject(UserInfoTransferError.invalidTransferId)
-                return
+                return [
+                    "error": "Invalid transfer ID"
+                ]
             }
             transfer.cancel()
-            promise.resolve(nil)
+            return [
+                "id": transferId
+            ]
         }
 
         Function("transferFile") { (file: String, metadata: [String: Any]?) in

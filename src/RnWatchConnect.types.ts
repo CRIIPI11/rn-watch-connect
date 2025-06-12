@@ -92,7 +92,9 @@ export interface RnWatchConnectInterface
    * Cancels a pending user info transfer.
    * @param transferId - The ID of the transfer to cancel
    */
-  cancelUserInfoTransfer(transferId: string): Promise<void>;
+  cancelUserInfoTransfer(transferId: string): {
+    id: string;
+  };
 
   // Data Message Methods
   /**
