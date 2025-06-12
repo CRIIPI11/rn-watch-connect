@@ -51,6 +51,26 @@ public class RnWatchConnectModule: Module {
             }
             return transfers
         }
+
+        Property("outstandingFileTransfers") {
+            var transfers: [Any] = []
+            for transfer in WCSession.default.outstandingFileTransfers {
+                transfers.append([
+                    "id": String(ObjectIdentifier(transfer).hashValue),
+                    "isTransferring": transfer.isTransferring,
+                    "progress": [
+                        "fractionCompleted": transfer.progress.fractionCompleted,
+                        "completedUnitCount": transfer.progress.completedUnitCount,
+                        "totalUnitCount": transfer.progress.totalUnitCount
+                    ],
+                    "file": [
+                        "fileURL": transfer.file.fileURL.absoluteString,
+                        "metadata": transfer.file.metadata ?? [:]
+                    ]
+                ])
+            }
+            return transfers
+        }
         
         // Functions
         
@@ -152,7 +172,23 @@ public class RnWatchConnectModule: Module {
             transfer.cancel()
             promise.resolve(nil)
         }
+
+        Function("transferFile") { (file: String, metadata: [String: Any]?) in
+            return RnWatchConnectManager.shared.transferFile(file, metadata: metadata)
+        }
         
+        Function("cancelFileTransfer") { (transferId: String) in
+            guard let transfer = WCSession.default.outstandingFileTransfers.first(where: { String(ObjectIdentifier($0).hashValue) == transferId }) else {
+                return [
+                    "error": "Invalid transfer ID"
+                ]
+            }
+            transfer.cancel()
+            return [
+                "id": transferId
+            ]
+        } 
+
         // Events
         Events(
             "onWatchPairedChanged",
@@ -163,7 +199,8 @@ public class RnWatchConnectModule: Module {
             "onDataMessageReceived",
             "onDataMessageWithReply",
             "onApplicationContextChanged",
-            "onUserInfoReceived"
+            "onUserInfoReceived",
+            "onFileReceived"
         )
         
         OnStartObserving {
@@ -219,6 +256,11 @@ public class RnWatchConnectModule: Module {
 
             manager.$userInfo.sink { [weak self] userInfo in
                 self?.sendEvent("onUserInfoReceived", userInfo)
+            }
+            .store(in: &cancellables)
+
+            manager.$receivedFile.sink { [weak self] file in
+                self?.sendEvent("onFileReceived", file)
             }
             .store(in: &cancellables)
         }

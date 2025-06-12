@@ -96,6 +96,29 @@ extension RnWatchConnectManager: WCSessionDelegate {
         }
     }
     
+    func session(_ session: WCSession, didReceive file: WCSessionFile) {
+        do {
+            let destinationURL = FileManager.default.temporaryDirectory.appendingPathComponent(file.fileURL.lastPathComponent)
+            
+            if FileManager.default.fileExists(atPath: destinationURL.path) {
+                try FileManager.default.removeItem(at: destinationURL)
+            }
+            try FileManager.default.copyItem(at: file.fileURL, to: destinationURL)
+            
+            DispatchQueue.main.async {
+                self.receivedFile = [
+                    "fileURL": destinationURL.absoluteString,
+                    "metadata": file.metadata ?? [:]
+                ]
+            }
+            
+            try FileManager.default.removeItem(at: file.fileURL)
+            
+        } catch {
+            print("Error handling received file: \(error.localizedDescription)")
+        }
+    }
+    
     func sessionDidBecomeInactive(_ session: WCSession) {
         // Handle session becoming inactive
         stateQueue.async { [weak self] in

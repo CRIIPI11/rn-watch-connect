@@ -19,6 +19,7 @@ class RnWatchConnectManager: NSObject {
     @Published var isReachable: Bool = false
     @Published var applicationContext: [String: Any] = [:]
     @Published var userInfo: [String: Any] = [:]
+    @Published var receivedFile: [String: Any] = [:]
     
     var isSupported: Bool {
         WCSession.isSupported()
@@ -78,5 +79,40 @@ class RnWatchConnectManager: NSObject {
         
         WCSession.default.sendMessageData(data, replyHandler: replyHandler, errorHandler: errorHandler)
     }
+
+    func transferFile(
+        _ file: String,
+        metadata: [String : Any]?
+    ) -> [String: Any] {
+        
+        guard let fileURL = URL(string: file) else {
+            return [
+                "error": "Invalid file URL"
+            ]
+        }
+        
+        guard FileManager.default.fileExists(atPath: fileURL.relativePath) else {
+            return [
+                "error": "File not found"
+            ]
+        }
+        
+        let transfer = WCSession.default.transferFile(fileURL, metadata: metadata)
+        
+        return [
+                "id": String(ObjectIdentifier(transfer).hashValue),
+                "isTransferring": transfer.isTransferring,
+                "progress": [
+                    "total": transfer.progress.totalUnitCount,
+                    "completed": transfer.progress.completedUnitCount,
+                    "fractionCompleted": transfer.progress.fractionCompleted
+                ],
+                "file": [
+                    "fileURL": transfer.file.fileURL.absoluteString,
+                    "metadata": transfer.file.metadata ?? [:]
+                ]
+            ]
+    }
+
     
 }

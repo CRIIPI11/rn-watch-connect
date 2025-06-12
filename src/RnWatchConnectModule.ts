@@ -5,6 +5,7 @@ import {
   RnWatchConnectInterface,
   OutstandingUserInfoTransfer,
   UserInfoTransfer,
+  FileTransfer,
 } from "./RnWatchConnect.types";
 
 // Declare the native module class with our strict interface
@@ -21,6 +22,7 @@ declare class RnWatchConnectModule
   readonly applicationContext: any;
   readonly receivedApplicationContext: any;
   readonly outstandingUserInfoTransfers: OutstandingUserInfoTransfer[];
+  readonly outstandingFileTransfers: FileTransfer[];
 
   // Message Methods
   sendMessage<T = Record<string, any>, R = Record<string, any>>(
@@ -36,6 +38,10 @@ declare class RnWatchConnectModule
   ): Promise<void>;
   transferUserInfo<T = Record<string, any>>(userInfo: T): UserInfoTransfer;
   cancelUserInfoTransfer(transferId: string): Promise<void>;
+  transferFile(file: string, metadata?: Record<string, any>): FileTransfer;
+  cancelFileTransfer(transferId: string): {
+    id: string;
+  };
 }
 
 // This call loads the native module object from the JSI.

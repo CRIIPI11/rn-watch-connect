@@ -13,6 +13,24 @@ export type UserInfoTransfer = {
   isTransferring: boolean;
 };
 
+export type File = {
+  fileURL: string;
+  metadata: Record<string, any>;
+};
+
+export type FileProgress = {
+  fractionCompleted: number;
+  completedUnitCount: number;
+  totalUnitCount: number;
+};
+
+export type FileTransfer = {
+  id: string;
+  isTransferring: boolean;
+  progress: FileProgress;
+  file: File;
+};
+
 export type RnWatchConnectModuleEvents = {
   /** Triggered when the Watch's reachability status changes */
   onReachabilityChanged: (params: { isWatchReachable: boolean }) => void;
@@ -32,6 +50,8 @@ export type RnWatchConnectModuleEvents = {
   onApplicationContextChanged: (params: any) => void;
   /** Triggered when user info is received from the Watch */
   onUserInfoReceived: (params: any) => void;
+  /** Triggered when a file is received from the Watch */
+  onFileReceived: (params: File) => void;
 };
 
 // Define the strict interface for the module
@@ -46,7 +66,7 @@ export interface RnWatchConnectInterface
   readonly applicationContext: any;
   readonly receivedApplicationContext: any;
   readonly outstandingUserInfoTransfers: OutstandingUserInfoTransfer[];
-
+  readonly outstandingFileTransfers: FileTransfer[];
   // Message Methods
   /**
    * Sends a message to the Watch and waits for a reply.
@@ -111,4 +131,20 @@ export interface RnWatchConnectInterface
   transferUserInfo<T extends Record<string, any>>(
     userInfo: T
   ): UserInfoTransfer;
+
+  /**
+   * Transfers a file to the Watch.
+   * @param file - The file to transfer
+   * @param metadata - The metadata to transfer
+   * @returns A promise that resolves with the transfer ID and isTransferring status: { id: string, isTransferring: boolean }
+   */
+  transferFile(file: string, metadata?: Record<string, any>): FileTransfer;
+
+  /**
+   * Cancels a pending file transfer.
+   * @param transferId - The ID of the transfer to cancel
+   */
+  cancelFileTransfer(transferId: string): {
+    id: string;
+  };
 }
