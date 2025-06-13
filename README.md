@@ -1,6 +1,10 @@
 # ⌚️📱 rn-watch-connect
 
-A React Native module that enables seamless communication between an iOS app and its paired Apple Watch using WatchConnectivity. It provides an easy-to-use interface for sending messages, transferring files, syncing data, and monitoring connection status between the iPhone and Apple Watch.
+A React Native module that enables smooth and reliable communication between an iOS app and its paired Apple Watch using Apple’s [WatchConnectivity](https://developer.apple.com/documentation/watchconnectivity) framework. This library offers an easy-to-use interface for sending messages, transferring files, syncing data, and monitoring the connection status between the iPhone and Apple Watch — all from a React Native app.
+
+> ⚠️ **Note:** This module does **NOT** provide a way to build Apple Watch apps. A separate Watch app must still be developed using Swift or SwiftUI. This package is intended as a modern, actively maintained alternative to the previously available (but now outdated) React Native watch connectivity module.
+
+🙌 Contributions are welcome! If you'd like to improve the module or add new features, feel free to open an issue or submit a pull request.
 
 ## 🚀 Installation
 
@@ -12,25 +16,29 @@ yarn add rn-watch-connect
 
 ## ✨ Features
 
-- Send messages between iPhone and Apple Watch
-- Monitor watch connectivity status
-- TypeScript support with generic types
-- Event-based communication
-- Promise-based message sending with reply support
+- 📶 Monitor watch connectivity status
+- 💬 Send messages between iPhone and Apple Watch
+- 📂 Transfer files between iPhone and Apple Watch
+- 🔄 Sync data between iPhone and Apple Watch
+- 📡 Event-based communication
+- 🧠 TypeScript support with generic types
+- 📩 Promise-based message sending with reply support
 
 ## 📚 API Reference
 
 ### Properties
 
-| Property                     | Type      | Description                                                |
-| ---------------------------- | --------- | ---------------------------------------------------------- |
-| `isWatchSupported`           | `boolean` | Indicates if the device supports Watch Connectivity        |
-| `isWatchPaired`              | `boolean` | Indicates if an Apple Watch is paired with the device      |
-| `isWatchAppInstalled`        | `boolean` | Indicates if the Watch app is installed                    |
-| `isWatchReachable`           | `boolean` | Indicates if the paired Watch is currently reachable       |
-| `watchActivationState`       | `string`  | Current activation state of the Watch Connectivity session |
-| `applicationContext`         | `any`     | Current application context                                |
-| `receivedApplicationContext` | `any`     | Received application context from the Watch                |
+| Property                       | Type                            | Description                                                |
+| ------------------------------ | ------------------------------- | ---------------------------------------------------------- |
+| `isWatchSupported`             | `boolean`                       | Indicates if the device supports Watch Connectivity        |
+| `isWatchPaired`                | `boolean`                       | Indicates if an Apple Watch is paired with the device      |
+| `isWatchAppInstalled`          | `boolean`                       | Indicates if the Watch app is installed                    |
+| `isWatchReachable`             | `boolean`                       | Indicates if the paired Watch is currently reachable       |
+| `watchActivationState`         | `string`                        | Current activation state of the Watch Connectivity session |
+| `applicationContext`           | `{ [key: string]: any }`        | Current application context                                |
+| `receivedApplicationContext`   | `{ [key: string]: any }`        | Received application context from the Watch                |
+| `outstandingUserInfoTransfers` | `OutstandingUserInfoTransfer[]` | Outstanding user info transfers                            |
+| `outstandingFileTransfers`     | `FileTransfer[]`                | Outstanding file transfers                                 |
 
 ## 📡 Methods
 
@@ -213,6 +221,83 @@ await RnWatchConnect.updateApplicationContext({
 });
 ```
 
+#### `transferUserInfo<T>(userInfo: T): UserInfoTransfer`
+
+Transfers user info to the Watch.
+
+**Parameters:**
+
+- `userInfo`: The user info to transfer (defaults to `Record<string, any>`)
+
+**Returns:**
+
+- `UserInfoTransfer`: The transfer ID and isTransferring status
+
+**Example:**
+
+```typescript
+const transfer = RnWatchConnect.transferUserInfo({
+  message: "Hello from iPhone!",
+});
+```
+
+#### `cancelUserInfoTransfer(transferId: string): { id: string }`
+
+Cancels a pending user info transfer.
+
+**Parameters:**
+
+- `transferId`: The ID of the transfer to cancel
+
+**Returns:**
+
+- `{ id: string }`: The transfer ID
+
+**Example:**
+
+```typescript
+RnWatchConnect.cancelUserInfoTransfer(transfer.id);
+```
+
+#### `transferFile(file: string, metadata?: Record<string, any>): FileTransfer`
+
+Transfers a file to the Watch.
+
+**Parameters:**
+
+- `file`: The file URL to transfer
+- `metadata`: The metadata to transfer (defaults to `Record<string, any>`) (optional)
+
+**Returns:**
+
+- `FileTransfer`: Object containing the transfer information
+
+**Example:**
+
+```typescript
+const transfer = RnWatchConnect.transferFile("file://path/to/file.txt", {
+  name: "file.txt",
+});
+```
+
+#### `cancelFileTransfer(transferId: string): { id: string }`
+
+Cancels a pending file transfer.
+
+**Parameters:**
+
+- `transferId`: The ID of the transfer to cancel
+
+**Returns:**
+
+- `{ id: string }`: The transfer ID
+
+**Example:**
+
+```typescript
+RnWatchConnect.cancelFileTransfer(transfer.id);
+```
+
 ## 📡 Events
 
 #### `onMessageReceived`
@@ -272,6 +357,32 @@ Triggered when a data message requiring a reply is received from the Watch. The 
 useEventListener(RnWatchConnect, "onDataMessageWithReply", (event) => {
   console.log("Data message received:", event.data);
   RnWatchConnect.replyToDataMessage(event.replyId, "SGVsbG8gZnJvbSBpUGhvbmUh");
+});
+```
+
+#### `onUserInfoReceived`
+
+Triggered when user info is received from the Watch. The event object is the user info object received from the Watch.
+
+**Example:**
+
+```typescript
+useEventListener(RnWatchConnect, "onUserInfoReceived", (event) => {
+  console.log("User info received:", event);
+});
+```
+
+#### `onFileReceived`
+
+Triggered when a file is received from the Watch. The event object is an object with the following properties:
+
+- `File`: The file object received from the Watch
+
+**Example:**
+
+```typescript
+useEventListener(RnWatchConnect, "onFileReceived", (event) => {
+  console.log("File received:", event);
 });
 ```
 
@@ -338,6 +449,47 @@ useEventListener(
 );
 ```
 
+## Types
+
+### `OutstandingUserInfoTransfer`
+
+| Property       | Type                | Description                                   |
+| -------------- | ------------------- | --------------------------------------------- |
+| id             | string              | Unique identifier for the transfer            |
+| userInfo       | Record<string, any> | The user info payload being transferred       |
+| isTransferring | boolean             | Whether the transfer is currently in progress |
+
+### `UserInfoTransfer`
+
+| Property       | Type    | Description                                   |
+| -------------- | ------- | --------------------------------------------- |
+| id             | string  | Unique identifier for the transfer            |
+| isTransferring | boolean | Whether the transfer is currently in progress |
+
+### `FileTransfer`
+
+| Property       | Type         | Description                                   |
+| -------------- | ------------ | --------------------------------------------- |
+| id             | string       | Unique identifier for the transfer            |
+| isTransferring | boolean      | Whether the transfer is currently in progress |
+| progress       | FileProgress | The progress of the file transfer             |
+| file           | File         | The file being transferred                    |
+
+### `File`
+
+| Property | Type                | Description                           |
+| -------- | ------------------- | ------------------------------------- |
+| fileURL  | string              | The URL of the file being transferred |
+| metadata | Record<string, any> | The metadata associated with the file |
+
+### `FileProgress`
+
+| Property           | Type   | Description                                               |
+| ------------------ | ------ | --------------------------------------------------------- |
+| fractionCompleted  | number | The fraction of the file transfer that has been completed |
+| completedUnitCount | number | The number of bytes transferred so far                    |
+| totalUnitCount     | number | The total number of bytes to be transferred               |
+
 ## TypeScript Support
 
 The module is fully typed and supports generic types for messages and replies. You can define your own types for messages and replies:
@@ -358,47 +510,6 @@ type MyReply = {
 const reply = await RnWatchConnect.sendMessage<MyMessage, MyReply>({
   message: "Hello",
 });
-```
-
-## 📝 Example
-
-```typescript
-import RnWatchConnect, { useEventListener } from "rn-watch-connect";
-
-type MyMessage = {
-  message: string;
-};
-
-type MyReply = {
-  response: string;
-};
-
-function App() {
-  // Listen for messages
-  useEventListener<MyMessage>(
-    RnWatchConnect,
-    "onMessageReceived",
-    ({ message }) => {
-      console.log("Message received:", message);
-    }
-  );
-
-  // Send a message
-  const sendMessage = async () => {
-    try {
-      const reply = await RnWatchConnect.sendMessage<MyMessage, MyReply>({
-        message: "Hello from iPhone!"
-      });
-      console.log("Reply:", reply);
-    } catch (error) {
-      console.error("Error:", error);
-    }
-  };
-
-  return (
-    // ... your app UI
-  );
-}
 ```
 
 ## 📄 License
