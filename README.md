@@ -37,7 +37,7 @@ yarn add rn-watch-connect
 | `watchActivationState`         | `string`                        | Current activation state of the Watch Connectivity session |
 | `applicationContext`           | `{ [key: string]: any }`        | Current application context                                |
 | `receivedApplicationContext`   | `{ [key: string]: any }`        | Received application context from the Watch                |
-| `outstandingUserInfoTransfers` | `OutstandingUserInfoTransfer[]`(#outstandinguserinfotransfer) | Outstanding user info transfers                            |
+| `outstandingUserInfoTransfers` | [`OutstandingUserInfoTransfer[]`](#outstandinguserinfotransfer) | Outstanding user info transfers                            |
 | `outstandingFileTransfers`     | `FileTransfer[]`                | Outstanding file transfers                                 |
 
 ## 📡 Methods
