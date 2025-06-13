@@ -472,8 +472,8 @@ useEventListener(
 | -------------- | ------------ | --------------------------------------------- |
 | id             | string       | Unique identifier for the transfer            |
 | isTransferring | boolean      | Whether the transfer is currently in progress |
-| progress       | FileProgress | The progress of the file transfer             |
-| file           | File         | The file being transferred                    |
+| progress       | [FileProgress](#fileprogress) | The progress of the file transfer             |
+| file           | [File](#file)         | The file being transferred                    |
 
 ### `File`
 
