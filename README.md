@@ -38,7 +38,7 @@ yarn add rn-watch-connect
 | `applicationContext`           | `{ [key: string]: any }`        | Current application context                                |
 | `receivedApplicationContext`   | `{ [key: string]: any }`        | Received application context from the Watch                |
 | `outstandingUserInfoTransfers` | [`OutstandingUserInfoTransfer[]`](#outstandinguserinfotransfer) | Outstanding user info transfers                            |
-| `outstandingFileTransfers`     | `FileTransfer[]`                | Outstanding file transfers                                 |
+| `outstandingFileTransfers`     | [`FileTransfer[]`](#filetransfer)                | Outstanding file transfers                                 |
 
 ## 📡 Methods
 
@@ -231,7 +231,7 @@ Transfers user info to the Watch.
 
 **Returns:**
 
-- `UserInfoTransfer`: The transfer ID and isTransferring status
+- [`UserInfoTransfer`](#userinfotransfer): The transfer ID and isTransferring status
 
 **Example:**
 
@@ -270,7 +270,7 @@ Transfers a file to the Watch.
 
 **Returns:**
 
-- `FileTransfer`: Object containing the transfer information
+- [`FileTransfer`](#filetransfer): Object containing the transfer information
 
 **Example:**
 
