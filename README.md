@@ -37,8 +37,8 @@ yarn add rn-watch-connect
 | `watchActivationState`         | `string`                        | Current activation state of the Watch Connectivity session |
 | `applicationContext`           | `{ [key: string]: any }`        | Current application context                                |
 | `receivedApplicationContext`   | `{ [key: string]: any }`        | Received application context from the Watch                |
-| `outstandingUserInfoTransfers` | `OutstandingUserInfoTransfer[]` | Outstanding user info transfers                            |
-| `outstandingFileTransfers`     | `FileTransfer[]`                | Outstanding file transfers                                 |
+| `outstandingUserInfoTransfers` | [`OutstandingUserInfoTransfer[]`](#outstandinguserinfotransfer) | Outstanding user info transfers                            |
+| `outstandingFileTransfers`     | [`FileTransfer[]`](#filetransfer)                | Outstanding file transfers                                 |
 
 ## 📡 Methods
 
@@ -231,7 +231,7 @@ Transfers user info to the Watch.
 
 **Returns:**
 
-- `UserInfoTransfer`: The transfer ID and isTransferring status
+- [`UserInfoTransfer`](#userinfotransfer): The transfer ID and isTransferring status
 
 **Example:**
 
@@ -270,7 +270,7 @@ Transfers a file to the Watch.
 
 **Returns:**
 
-- `FileTransfer`: Object containing the transfer information
+- [`FileTransfer`](#filetransfer): Object containing the transfer information
 
 **Example:**
 
@@ -472,8 +472,8 @@ useEventListener(
 | -------------- | ------------ | --------------------------------------------- |
 | id             | string       | Unique identifier for the transfer            |
 | isTransferring | boolean      | Whether the transfer is currently in progress |
-| progress       | FileProgress | The progress of the file transfer             |
-| file           | File         | The file being transferred                    |
+| progress       | [FileProgress](#fileprogress) | The progress of the file transfer             |
+| file           | [File](#file)         | The file being transferred                    |
 
 ### `File`
 
