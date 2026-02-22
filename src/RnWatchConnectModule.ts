@@ -1,53 +1,68 @@
-import { NativeModule, requireNativeModule } from "expo";
-
 import {
-  RnWatchConnectModuleEvents,
   RnWatchConnectInterface,
   OutstandingUserInfoTransfer,
   UserInfoTransfer,
   FileTransfer,
 } from "./RnWatchConnect.types";
 
-// Declare the native module class with our strict interface
-declare class RnWatchConnectModule
-  extends NativeModule<RnWatchConnectModuleEvents>
-  implements RnWatchConnectInterface
-{
-  // Properties
-  readonly isWatchSupported: boolean;
-  readonly isWatchPaired: boolean;
-  readonly isWatchAppInstalled: boolean;
-  readonly isWatchReachable: boolean;
-  readonly watchActivationState: string;
-  readonly applicationContext: any;
-  readonly receivedApplicationContext: any;
-  readonly outstandingUserInfoTransfers: OutstandingUserInfoTransfer[];
-  readonly outstandingFileTransfers: FileTransfer[];
+const UNSUPPORTED_MESSAGE =
+  "RnWatchConnect is only supported on iOS. WatchConnectivity is not available on this platform.";
 
-  // Message Methods
-  sendMessage<T = Record<string, any>, R = Record<string, any>>(
-    message: T
-  ): Promise<R>;
-  sendMessageWithoutReply<T = Record<string, any>>(message: T): Promise<void>;
-  replyToMessage(replyId: string, reply: Record<string, any>): void;
-  sendDataMessage(data: string): Promise<string>;
-  sendDataMessageWithoutReply(data: string): Promise<void>;
-  replyToDataMessage(replyId: string, response: string): void;
-  updateApplicationContext<T = Record<string, any>>(
-    applicationContext: T
-  ): Promise<void>;
-  transferUserInfo<T = Record<string, any>>(userInfo: T): UserInfoTransfer;
-  cancelUserInfoTransfer(transferId: string): {
-    id: string;
-  };
-  transferFile(file: string, metadata?: Record<string, any>): FileTransfer;
-  cancelFileTransfer(transferId: string): {
-    id: string;
-  };
-}
+/**
+ * Fallback stub for non-iOS platforms.
+ * Properties return safe defaults and methods throw a descriptive error.
+ */
+const module = {
+  isWatchSupported: false,
+  isWatchPaired: false,
+  isWatchAppInstalled: false,
+  isWatchReachable: false,
+  watchActivationState: "notActivated",
+  applicationContext: {},
+  receivedApplicationContext: {},
+  outstandingUserInfoTransfers: [] as OutstandingUserInfoTransfer[],
+  outstandingFileTransfers: [] as FileTransfer[],
 
-// This call loads the native module object from the JSI.
-const module = requireNativeModule<RnWatchConnectModule>("RnWatchConnect");
+  sendMessage(): Promise<never> {
+    return Promise.reject(new Error(UNSUPPORTED_MESSAGE));
+  },
+  sendMessageWithoutReply(): Promise<never> {
+    return Promise.reject(new Error(UNSUPPORTED_MESSAGE));
+  },
+  replyToMessage(): void {
+    throw new Error(UNSUPPORTED_MESSAGE);
+  },
+  sendDataMessage(): Promise<never> {
+    return Promise.reject(new Error(UNSUPPORTED_MESSAGE));
+  },
+  sendDataMessageWithoutReply(): Promise<never> {
+    return Promise.reject(new Error(UNSUPPORTED_MESSAGE));
+  },
+  replyToDataMessage(): void {
+    throw new Error(UNSUPPORTED_MESSAGE);
+  },
+  updateApplicationContext(): Promise<never> {
+    return Promise.reject(new Error(UNSUPPORTED_MESSAGE));
+  },
+  transferUserInfo(): UserInfoTransfer {
+    throw new Error(UNSUPPORTED_MESSAGE);
+  },
+  cancelUserInfoTransfer(): { id: string } {
+    throw new Error(UNSUPPORTED_MESSAGE);
+  },
+  transferFile(): FileTransfer {
+    throw new Error(UNSUPPORTED_MESSAGE);
+  },
+  cancelFileTransfer(): { id: string } {
+    throw new Error(UNSUPPORTED_MESSAGE);
+  },
 
-// Export the module with the strict interface type
-export default module as RnWatchConnectInterface;
+  addListener() {
+    return { remove: () => { } };
+  },
+  removeListener() { },
+  removeAllListeners() { },
+  emit() { },
+} as unknown as RnWatchConnectInterface;
+
+export default module;

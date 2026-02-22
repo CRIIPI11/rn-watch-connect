@@ -43,6 +43,9 @@ android/keystores/debug.keystore
 #
 example/ios/Pods
 
+# Android
+example/android/*
+
 # Ruby
 example/vendor/
 

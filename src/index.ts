@@ -1,4 +1,4 @@
-// Reexport the native module. On web, it will be resolved to RnWatchConnectModule.web.ts
-// and on native platforms to RnWatchConnectModule.ts
+// Reexport the native module. On iOS it resolves to RnWatchConnectModule.ios.ts (native module),
+// on all other platforms it resolves to the RnWatchConnectModule.ts fallback stub.
 export { default } from "./RnWatchConnectModule";
 export * from "./RnWatchConnect.types";
