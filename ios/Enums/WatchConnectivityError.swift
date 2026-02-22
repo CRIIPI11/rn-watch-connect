@@ -70,3 +70,20 @@ enum UserInfoTransferError: LocalizedError {
         }
     }
 }
+
+enum FileTransferError: LocalizedError {
+    case invalidFileURL
+    case fileNotFound
+    case invalidTransferId
+
+    var errorDescription: String? {
+        switch self {
+        case .invalidFileURL:
+            return "Invalid file URL"
+        case .fileNotFound:
+            return "File not found at the specified path"
+        case .invalidTransferId:
+            return "Invalid transfer ID"
+        }
+    }
+}

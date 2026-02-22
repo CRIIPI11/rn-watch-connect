@@ -29,10 +29,10 @@ declare class RnWatchConnectModule
     message: T
   ): Promise<R>;
   sendMessageWithoutReply<T = Record<string, any>>(message: T): Promise<void>;
-  replyToMessage(replyId: string, reply: Record<string, any>): void;
+  replyToMessage(replyId: string, reply: Record<string, any>): Promise<void>;
   sendDataMessage(data: string): Promise<string>;
   sendDataMessageWithoutReply(data: string): Promise<void>;
-  replyToDataMessage(replyId: string, response: string): void;
+  replyToDataMessage(replyId: string, response: string): Promise<void>;
   updateApplicationContext<T = Record<string, any>>(
     applicationContext: T
   ): Promise<void>;

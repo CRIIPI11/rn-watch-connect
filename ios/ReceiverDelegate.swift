@@ -120,10 +120,7 @@ extension RnWatchConnectManager: WCSessionDelegate {
     }
     
     func sessionDidBecomeInactive(_ session: WCSession) {
-        // Handle session becoming inactive
-        stateQueue.async { [weak self] in
-            self?.updateActivationStateDescription()
-        }
+        updateActivationStateDescription()
     }
     
     func sessionDidDeactivate(_ session: WCSession) {

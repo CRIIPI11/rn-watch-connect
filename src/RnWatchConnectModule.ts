@@ -29,8 +29,8 @@ const module = {
   sendMessageWithoutReply(): Promise<never> {
     return Promise.reject(new Error(UNSUPPORTED_MESSAGE));
   },
-  replyToMessage(): void {
-    throw new Error(UNSUPPORTED_MESSAGE);
+  replyToMessage(): Promise<never> {
+    return Promise.reject(new Error(UNSUPPORTED_MESSAGE));
   },
   sendDataMessage(): Promise<never> {
     return Promise.reject(new Error(UNSUPPORTED_MESSAGE));
@@ -38,8 +38,8 @@ const module = {
   sendDataMessageWithoutReply(): Promise<never> {
     return Promise.reject(new Error(UNSUPPORTED_MESSAGE));
   },
-  replyToDataMessage(): void {
-    throw new Error(UNSUPPORTED_MESSAGE);
+  replyToDataMessage(): Promise<never> {
+    return Promise.reject(new Error(UNSUPPORTED_MESSAGE));
   },
   updateApplicationContext(): Promise<never> {
     return Promise.reject(new Error(UNSUPPORTED_MESSAGE));

@@ -86,7 +86,7 @@ export interface RnWatchConnectInterface
    * @param replyId - The ID of the message to reply to
    * @param reply - The message to send as a reply
    */
-  replyToMessage(replyId: string, reply: MessagePayload): void;
+  replyToMessage(replyId: string, reply: MessagePayload): Promise<void>;
 
   /**
    * Cancels a pending user info transfer.
@@ -115,7 +115,7 @@ export interface RnWatchConnectInterface
    * @param replyId - The ID of the message to reply to
    * @param response - The base64 encoded string to send as a reply
    */
-  replyToDataMessage(replyId: string, response: string): void;
+  replyToDataMessage(replyId: string, response: string): Promise<void>;
 
   /**
    * Updates the application context on the Watch.

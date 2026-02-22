@@ -86,33 +86,28 @@ public class RnWatchConnectModule: Module {
             )
         }
 
-        AsyncFunction("sendMessageWithoutReply") { (message: [String: Any], promise: Promise) in
-            RnWatchConnectManager.shared.sendMessage(
-                message,
-                replyHandler: nil,
-                errorHandler: { error in
-                    promise.reject(error)
-                }
-            )
+        AsyncFunction("sendMessageWithoutReply") { (message: [String: Any]) in
+            guard WCSession.default.isReachable else {
+                throw WatchConnectivityError.watchNotReachable
+            }
+            WCSession.default.sendMessage(message, replyHandler: nil, errorHandler: nil)
         }
         
-        AsyncFunction("replyToMessage") { (replyId: String, response: [String: Any], promise: Promise) in
-            if let replyHandler = pendingReplies[replyId] {
-                replyHandler(response)
-                pendingReplies.removeValue(forKey: replyId)
-            } else {
-                promise.reject(MessageError.invalidReplyId)
+        AsyncFunction("replyToMessage") { (replyId: String, response: [String: Any]) in
+            guard let replyHandler = self.pendingReplies[replyId] else {
+                throw MessageError.invalidReplyId
             }
+            replyHandler(response)
+            self.pendingReplies.removeValue(forKey: replyId)
         }
 
-        AsyncFunction("replyToDataMessage") { (replyId: String, response: String, promise: Promise) in
-            if let replyHandler = pendingDataReplies[replyId] {
-                let decodedData = try validateBase64(response)
-                replyHandler(decodedData)
-                pendingDataReplies.removeValue(forKey: replyId)
-            } else {
-                promise.reject(MessageError.invalidReplyId)
+        AsyncFunction("replyToDataMessage") { (replyId: String, response: String) in
+            guard let replyHandler = self.pendingDataReplies[replyId] else {
+                throw MessageError.invalidReplyId
             }
+            let decodedData = try validateBase64(response)
+            replyHandler(decodedData)
+            self.pendingDataReplies.removeValue(forKey: replyId)
         }
         
         AsyncFunction("sendDataMessage") { (data: String, promise: Promise) in
@@ -134,25 +129,16 @@ public class RnWatchConnectModule: Module {
             }
         }
 
-        AsyncFunction("sendDataMessageWithoutReply") { (data: String, promise: Promise) in
-            do {
-                let decodedData = try validateBase64(data)
-                RnWatchConnectManager.shared.sendDataMessage(decodedData, replyHandler: nil, errorHandler: { error in
-                    promise.reject(error)
-                })
-            } catch {   
-                promise.reject(error)
+        AsyncFunction("sendDataMessageWithoutReply") { (data: String) in
+            let decodedData = try validateBase64(data)
+            guard WCSession.default.isReachable else {
+                throw WatchConnectivityError.watchNotReachable
             }
+            WCSession.default.sendMessageData(decodedData, replyHandler: nil, errorHandler: nil)
         }
         
-        AsyncFunction("updateApplicationContext") { (applicationContext: [String: Any], promise: Promise) in
-            
-            do {
-                try WCSession.default.updateApplicationContext(applicationContext)
-            } catch {
-                print("❌ Failed to update application context: \(error.localizedDescription)")
-                promise.reject(error)
-            }
+        AsyncFunction("updateApplicationContext") { (applicationContext: [String: Any]) in
+            try WCSession.default.updateApplicationContext(applicationContext)
         }
 
         Function("transferUserInfo") { (userInfo: [String: Any]) in
@@ -163,32 +149,24 @@ public class RnWatchConnectModule: Module {
             ]
         }
 
-        Function("cancelUserInfoTransfer") { (transferId: String) in
+        Function("cancelUserInfoTransfer") { (transferId: String) -> [String: Any] in
             guard let transfer = WCSession.default.outstandingUserInfoTransfers.first(where: { String(ObjectIdentifier($0).hashValue) == transferId }) else {
-                return [
-                    "error": "Invalid transfer ID"
-                ]
+                throw UserInfoTransferError.invalidTransferId
             }
             transfer.cancel()
-            return [
-                "id": transferId
-            ]
+            return ["id": transferId]
         }
 
-        Function("transferFile") { (file: String, metadata: [String: Any]?) in
-            return RnWatchConnectManager.shared.transferFile(file, metadata: metadata)
+        Function("transferFile") { (file: String, metadata: [String: Any]?) -> [String: Any] in
+            return try RnWatchConnectManager.shared.transferFile(file, metadata: metadata)
         }
         
-        Function("cancelFileTransfer") { (transferId: String) in
+        Function("cancelFileTransfer") { (transferId: String) -> [String: Any] in
             guard let transfer = WCSession.default.outstandingFileTransfers.first(where: { String(ObjectIdentifier($0).hashValue) == transferId }) else {
-                return [
-                    "error": "Invalid transfer ID"
-                ]
+                throw FileTransferError.invalidTransferId
             }
             transfer.cancel()
-            return [
-                "id": transferId
-            ]
+            return ["id": transferId]
         } 
 
         // Events

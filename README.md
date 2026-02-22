@@ -111,7 +111,7 @@ await RnWatchConnect.sendMessageWithoutReply({
 });
 ```
 
-#### `replyToMessage(replyId: string, reply: Record<string, any>): void`
+#### `replyToMessage(replyId: string, reply: Record<string, any>): Promise<void>`
 
 Sends a reply to a message received from the Watch.
 
@@ -120,10 +120,12 @@ Sends a reply to a message received from the Watch.
 - `replyId`: The ID of the message to reply to
 - `reply`: The reply message to send
 
+**Throws:** If the `replyId` is invalid
+
 **Example:**
 
 ```typescript
-RnWatchConnect.replyToMessage(replyId, {
+await RnWatchConnect.replyToMessage(replyId, {
   response: "Hello from iPhone!",
 });
 ```
@@ -187,7 +189,7 @@ try {
 }
 ```
 
-#### `replyToDataMessage(replyId: string, response: string): void`
+#### `replyToDataMessage(replyId: string, response: string): Promise<void>`
 
 Sends a reply to a data message received from the Watch.
 
@@ -196,10 +198,12 @@ Sends a reply to a data message received from the Watch.
 - `replyId`: The ID of the message to reply to
 - `response`: The base64 encoded response string
 
+**Throws:** If the `replyId` is invalid or the base64 string is malformed
+
 **Example:**
 
 ```typescript
-RnWatchConnect.replyToDataMessage(
+await RnWatchConnect.replyToDataMessage(
   event.replyId,
   "TWVzc2FnZSByZWNlaXZlZCBvbiBSZWFjdCBOYXRpdmUh"
 );
@@ -253,6 +257,8 @@ Cancels a pending user info transfer.
 
 - `{ id: string }`: The transfer ID
 
+**Throws:** If the `transferId` is invalid
+
 **Example:**
 
 ```typescript
@@ -271,6 +277,8 @@ Transfers a file to the Watch.
 **Returns:**
 
 - [`FileTransfer`](#filetransfer): Object containing the transfer information
+
+**Throws:** If the file URL is invalid or the file is not found
 
 **Example:**
 
@@ -291,6 +299,8 @@ Cancels a pending file transfer.
 **Returns:**
 
 - `{ id: string }`: The transfer ID
+
+**Throws:** If the `transferId` is invalid
 
 **Example:**
 
