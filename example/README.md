@@ -1,56 +1,53 @@
 # 🧪 rn-watch-connect Example
 
-This is the official example project for [`rn-watch-connect`](https://github.com/CRIIPI11/rn-watch-connect/) — a React Native module that enables seamless communication between an iOS app and its paired Apple Watch using Apple’s [WatchConnectivity](https://developer.apple.com/documentation/watchconnectivity) framework.
+The example project for [`rn-watch-connect`](https://github.com/CRIIPI11/rn-watch-connect/), a React Native module that connects an iOS app to its paired Apple Watch using Apple's [WatchConnectivity](https://developer.apple.com/documentation/watchconnectivity) framework.
 
-Note: Make sure you use actual devices for testing as testing in simulator is not recommended as stated in the [Apple Documentation](https://developer.apple.com/documentation/watchconnectivity).
+It contains two apps that talk to each other:
 
-This example demonstrates:
+| App                | Where                    | What it does                                                                                       |
+| ------------------ | ------------------------ | -------------------------------------------------------------------------------------------------- |
+| iPhone (Expo SDK 57) | [`App.tsx`](./App.tsx) | Exercises every module API: status, messages, data messages, application context, user info, files |
+| Apple Watch (SwiftUI) | [`targets/watch/`](./targets/watch) | Native companion app that replies to the phone and can send everything back                         |
 
-- 📶 Monitoring the status of the paired Apple Watch
-- 💬 Sending messages between iPhone and Apple Watch (with and without replies)
-- 📂 Transferring files and syncing data
-- 🔄 Updating and receiving application context
-- 🧠 Handling events using listeners
-- 📡 SwiftUI + WatchConnectivity integration on the Watch side
+The watch app is generated into the Xcode project by [`@bacons/apple-targets`](https://github.com/EvanBacon/expo-apple-targets), so it lives outside `ios/` and survives `npx expo prebuild --clean`.
 
-> ⚠️ This project includes both a React Native iOS app and a native Watch app (built in SwiftUI) to demonstrate full end-to-end connectivity.
+## 🛠 Setup
 
----
+```bash
+git clone https://github.com/CRIIPI11/rn-watch-connect/
+cd rn-watch-connect
+npm install
+cd example
+npm install
+```
 
-## 🛠 Installation
+Set your own Apple Team ID in [`app.json`](./app.json) (`expo.ios.appleTeamId`) and change the bundle identifier if you're running on a real device.
 
-1. **Clone the repo:**
+## ▶️ Run
 
-   ```bash
-   git clone https://github.com/CRIIPI11/rn-watch-connect/
-   cd rn-watch-connect
-   ```
+```bash
+npx expo prebuild -p ios --clean
+npx expo run:ios
+```
 
-2. **Install dependencies:**
+Installing the iPhone app embeds the watch app. To install it on a watch:
 
-   ```bash
-   npm install
-   cd example
-   npm install
-   ```
+- **Simulator:** pick a paired iPhone + Apple Watch simulator pair, then run the `WatchConnectExample` scheme in Xcode (`xed ios`) on the watch simulator.
+- **Device:** install from the Watch app on the iPhone, or run the `WatchConnectExample` scheme in Xcode.
 
-3. **Run the app:**
+> Simulators handle live messages, data messages, and application context. Background transfers (`transferUserInfo`, `transferFile`) are unreliable on the simulator, so test them on real devices.
 
-   ```bash
-   cd example
-   npx expo run:ios
-   ```
+## 📝 What to try
 
-- Watch app can be installed from the Watch app on the iPhone or running the watch target in Xcode if it doesn't install automatically.
+| Feature             | From iPhone                                 | From Watch                    |
+| ------------------- | ------------------------------------------- | ----------------------------- |
+| Status              | Pills update live via events                | Reachability indicator        |
+| Message             | **Send** shows the watch's reply            | **Send message** → phone replies |
+| Data message        | **Send data** shows the watch's byte count  | **Send data** → phone replies |
+| Application context | Tap a color to tint the watch app           | **App context**               |
+| User info           | **Transfer user info**                      | **User info**                 |
+| Files               | 1 KB or 5 MB file with progress + cancel    | **Send file**                 |
 
-## 📝 Usage
+Everything sent or received shows up in the **Activity** log on both devices.
 
-On launch, the iOS app will display most of the functionality of the module. From the app, you can:
-
-- Send a message or data message and receive a reply from the Watch
-- Subscribe to messages or data messages from the Watch and reply to them
-- Transfer files and observe transfer status
-- Update the application context and user info
-- Listen to connectivity changes and events in real time
-
-You can modify App.tsx to test different interactions
+The message shapes both apps agree on are documented at the top of [`ConnectivityStore.swift`](./targets/watch/ConnectivityStore.swift).
