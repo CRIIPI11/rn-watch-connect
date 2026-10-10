@@ -1,13 +1,14 @@
 {
   "name": "rn-watch-connect",
-  "version": "1.2.0",
+  "version": "2.0.0",
   "description": "A React Native module that enables seamless communication between an iOS app and its paired Apple Watch using WatchConnectivity. It provides an easy-to-use interface for sending messages, transferring files, syncing data, and monitoring connection status between the iPhone and Apple Watch.",
   "main": "build/index.js",
   "types": "build/index.d.ts",
   "scripts": {
     "build": "expo-module build",
     "clean": "expo-module clean",
-    "lint": "expo-module lint",
+    "typecheck": "expo-module typecheck",
+    "lint": "oxlint src",
     "test": "expo-module test",
     "prepare": "expo-module prepare",
     "prepublishOnly": "expo-module prepublishOnly",
@@ -36,10 +37,11 @@
   "homepage": "https://github.com/CRIIPI11/rn-watch-connect#readme",
   "dependencies": {},
   "devDependencies": {
-    "@types/react": "~19.0.0",
-    "expo-module-scripts": "^4.1.6",
-    "expo": "~53.0.0",
-    "react-native": "0.79.1"
+    "@types/react": "~19.2.0",
+    "expo": "~57.0.27",
+    "expo-module-scripts": "^56.0.8",
+    "react": "19.2.3",
+    "react-native": "0.86.3"
   },
   "peerDependencies": {
     "expo": "*",

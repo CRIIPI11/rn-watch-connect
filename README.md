@@ -6,6 +6,13 @@ A React Native module that enables smooth and reliable communication between an 
 
 🙌 Contributions are welcome! If you'd like to improve the module or add new features, feel free to open an issue or submit a pull request.
 
+## 📋 Requirements
+
+- Expo SDK 57 or later (React Native 0.86+)
+- iOS 16.4 or later
+
+> Using an older Expo SDK or supporting iOS 15? Stay on `rn-watch-connect@1.x`.
+
 ## 🚀 Installation
 
 ```bash
