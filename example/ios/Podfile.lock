@@ -1964,7 +1964,7 @@ PODS:
     - React-utils (= 0.86.3)
     - ReactNativeDependencies
   - ReactNativeDependencies (0.86.3)
-  - RnWatchConnect (1.2.0):
+  - RnWatchConnect (2.0.0):
     - ExpoModulesCore
   - Yoga (0.0.0)
 
@@ -2329,7 +2329,7 @@ SPEC CHECKSUMS:
   ReactCodegen: 828f54f35f2bc4ee3f39345144ff0ec22c9535c2
   ReactCommon: 02f6a489d5eb4ab79d7deba5cd4434e0ba351a07
   ReactNativeDependencies: 6738e602b46fd24aa453cd58267ec3bb8bf29d27
-  RnWatchConnect: 54dbd641dd6b4c71016450509dc88d6be92d2ebc
+  RnWatchConnect: dac1e7f823a77a02fab91fd7a9b8d869d66b7a27
   Yoga: 18b74b3ade30bebc1904004dfaceae1dd02a330a
 
 PODFILE CHECKSUM: aa5bcb3b09c12330e2be64abe541c894a2b81cf9
