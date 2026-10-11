@@ -8,50 +8,10 @@
 import Foundation
 import WatchConnectivity
 
+// Outbound calls still on their way to the WatchSessionController (#3).
+// Inbound traffic and Session activation already live there.
 class RnWatchConnectManager: NSObject {
     static let shared: RnWatchConnectManager = RnWatchConnectManager()
-    let stateQueue = DispatchQueue(label: "com.rnwatchconnect.state", qos: .userInitiated)
-    
-    // MARK: - Published state
-    @Published var activationState: String = "unknown"
-    @Published var isPaired: Bool = false
-    @Published var isAppInstalled: Bool = false
-    @Published var isReachable: Bool = false
-    @Published var applicationContext: [String: Any] = [:]
-    @Published var userInfo: [String: Any] = [:]
-    @Published var receivedFile: [String: Any] = [:]
-    
-    var isSupported: Bool {
-        WCSession.isSupported()
-    }
-    
-    var messageReceivedHandler: (([String: Any]) -> Void)?
-    var messageWithReplyHandler: (([String: Any], @escaping ([String: Any]) -> Void) -> Void)?
-    var messageDataReceivedHandler: ((Data) -> Void)?
-    var messageDataWithReplyHandler: ((Data, @escaping (Data) -> Void) -> Void)?
-    
-    // Initialization
-    private override init() {
-        super.init()
-        activateSession()
-    }
-    
-    deinit {
-        messageReceivedHandler = nil
-        messageWithReplyHandler = nil
-        messageDataReceivedHandler = nil
-        messageDataWithReplyHandler = nil
-    }
-    
-    // MARK: - Private methods
-    // Function to activate the session and set the delegate
-    private func activateSession() {
-        guard isSupported else { return }
-        let session = WCSession.default
-        session.delegate = self
-        session.activate()
-    }
-    
     
     // MARK: - Functions
     func sendMessage(

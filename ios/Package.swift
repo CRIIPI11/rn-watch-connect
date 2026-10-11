@@ -10,8 +10,7 @@ let package = Package(
     targets: [
         .target(
             name: "WatchSession",
-            path: ".",
-            sources: ["Session", "Enums/WatchConnectivityError.swift"]
+            path: "Session"
         ),
         .testTarget(
             name: "WatchSessionTests",
