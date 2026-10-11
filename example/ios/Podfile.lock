@@ -2329,7 +2329,7 @@ SPEC CHECKSUMS:
   ReactCodegen: 828f54f35f2bc4ee3f39345144ff0ec22c9535c2
   ReactCommon: 02f6a489d5eb4ab79d7deba5cd4434e0ba351a07
   ReactNativeDependencies: 6738e602b46fd24aa453cd58267ec3bb8bf29d27
-  RnWatchConnect: dac1e7f823a77a02fab91fd7a9b8d869d66b7a27
+  RnWatchConnect: 25eb3c7b531b2a5e2feb46e685be9711b9f25213
   Yoga: 18b74b3ade30bebc1904004dfaceae1dd02a330a
 
 PODFILE CHECKSUM: aa5bcb3b09c12330e2be64abe541c894a2b81cf9

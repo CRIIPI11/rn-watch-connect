@@ -25,4 +25,6 @@ Pod::Spec.new do |s|
   }
 
   s.source_files = "**/*.{h,m,mm,swift,hpp,cpp}"
+  # SwiftPM test harness for the WatchSessionController (docs/adr/0001); not part of the pod.
+  s.exclude_files = ["Package.swift", "Tests/**/*", ".build/**/*"]
 end

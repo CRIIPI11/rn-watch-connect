@@ -61,3 +61,7 @@ yarn-error.log
 
 # TypeScript
 .tsbuildinfo
+
+# SwiftPM (ios/Package.swift test harness)
+ios/.build/
+ios/.swiftpm/
