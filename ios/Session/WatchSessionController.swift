@@ -52,6 +52,143 @@ final class WatchSessionController {
         port.activate()
     }
 
+    var applicationContext: [String: Any] { isSupported ? port.applicationContext : [:] }
+    var receivedApplicationContext: [String: Any] { isSupported ? port.receivedApplicationContext : [:] }
+
+    // MARK: - Messages
+
+    /// Sends a Message and reports the Reply, or the error, through the handlers.
+    /// Fails with `watchNotReachable`, without sending, when the Watch is not reachable.
+    func sendMessage(
+        _ message: [String: Any],
+        replyHandler: @escaping ([String: Any]) -> Void,
+        errorHandler: @escaping (Error) -> Void
+    ) {
+        guard isReachable else {
+            errorHandler(WatchConnectivityError.watchNotReachable)
+            return
+        }
+        port.sendMessage(message, replyHandler: replyHandler, errorHandler: errorHandler)
+    }
+
+    func sendMessageWithoutReply(_ message: [String: Any]) throws {
+        guard isReachable else { throw WatchConnectivityError.watchNotReachable }
+        port.sendMessage(message, replyHandler: nil, errorHandler: nil)
+    }
+
+    /// Sends a Data Message and reports the Reply, or the error, through the handlers.
+    /// Fails with `watchNotReachable`, without sending, when the Watch is not reachable.
+    func sendDataMessage(
+        _ data: Data,
+        replyHandler: @escaping (Data) -> Void,
+        errorHandler: @escaping (Error) -> Void
+    ) {
+        guard isReachable else {
+            errorHandler(WatchConnectivityError.watchNotReachable)
+            return
+        }
+        port.sendMessageData(data, replyHandler: replyHandler, errorHandler: errorHandler)
+    }
+
+    func sendDataMessageWithoutReply(_ data: Data) throws {
+        guard isReachable else { throw WatchConnectivityError.watchNotReachable }
+        port.sendMessageData(data, replyHandler: nil, errorHandler: nil)
+    }
+
+    // MARK: - Application Context
+
+    func updateApplicationContext(_ applicationContext: [String: Any]) throws {
+        try port.updateApplicationContext(applicationContext)
+    }
+
+    // MARK: - Transfers
+
+    func transferUserInfo(_ userInfo: [String: Any]) -> [String: Any] {
+        let transfer = port.transferUserInfo(userInfo)
+        return [
+            "id": transferId(of: transfer),
+            "isTransferring": transfer.isTransferring,
+        ]
+    }
+
+    var outstandingUserInfoTransfers: [[String: Any]] {
+        guard isSupported else { return [] }
+        return port.outstandingUserInfoTransfers.map { transfer in
+            [
+                "id": transferId(of: transfer),
+                "userInfo": transfer.userInfo,
+                "isTransferring": transfer.isTransferring,
+            ]
+        }
+    }
+
+    func cancelUserInfoTransfer(id: String) throws -> [String: Any] {
+        guard let transfer = port.outstandingUserInfoTransfers.first(where: { transferId(of: $0) == id }) else {
+            throw UserInfoTransferError.invalidTransferId
+        }
+        transfer.cancel()
+        return ["id": id]
+    }
+
+    /// - Parameter file: a file URL string; the file must exist.
+    func transferFile(_ file: String, metadata: [String: Any]?) throws -> [String: Any] {
+        guard let fileURL = URL(string: file) else {
+            throw FileTransferError.invalidFileURL
+        }
+        guard FileManager.default.fileExists(atPath: fileURL.relativePath) else {
+            throw FileTransferError.fileNotFound
+        }
+
+        let transfer = port.transferFile(fileURL, metadata: metadata)
+
+        // Moved as-is: these progress keys differ from outstandingFileTransfers'.
+        // Unifying the snapshot shape is the Transfers follow-up (architecture candidate #2).
+        return [
+            "id": transferId(of: transfer),
+            "isTransferring": transfer.isTransferring,
+            "progress": [
+                "total": transfer.progress.totalUnitCount,
+                "completed": transfer.progress.completedUnitCount,
+                "fractionCompleted": transfer.progress.fractionCompleted,
+            ],
+            "file": [
+                "fileURL": transfer.fileURL.absoluteString,
+                "metadata": transfer.metadata ?? [:],
+            ],
+        ]
+    }
+
+    var outstandingFileTransfers: [[String: Any]] {
+        guard isSupported else { return [] }
+        return port.outstandingFileTransfers.map { transfer in
+            [
+                "id": transferId(of: transfer),
+                "isTransferring": transfer.isTransferring,
+                "progress": [
+                    "fractionCompleted": transfer.progress.fractionCompleted,
+                    "completedUnitCount": transfer.progress.completedUnitCount,
+                    "totalUnitCount": transfer.progress.totalUnitCount,
+                ],
+                "file": [
+                    "fileURL": transfer.fileURL.absoluteString,
+                    "metadata": transfer.metadata ?? [:],
+                ],
+            ]
+        }
+    }
+
+    func cancelFileTransfer(id: String) throws -> [String: Any] {
+        guard let transfer = port.outstandingFileTransfers.first(where: { transferId(of: $0) == id }) else {
+            throw FileTransferError.invalidTransferId
+        }
+        transfer.cancel()
+        return ["id": id]
+    }
+
+    private func transferId(of transfer: AnyObject) -> String {
+        String(ObjectIdentifier(transfer).hashValue)
+    }
+
     // MARK: - Replies
 
     func replyToMessage(replyId: String, reply: [String: Any]) throws {

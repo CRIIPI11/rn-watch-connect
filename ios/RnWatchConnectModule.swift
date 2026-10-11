@@ -1,5 +1,4 @@
 import ExpoModulesCore
-import WatchConnectivity
 
 public class RnWatchConnectModule: Module {
     
@@ -30,49 +29,25 @@ public class RnWatchConnectModule: Module {
         }
         
         Property("applicationContext") {
-            WCSession.default.applicationContext
+            controller.applicationContext
         }
         
         Property("receivedApplicationContext") {
-            WCSession.default.receivedApplicationContext
+            controller.receivedApplicationContext
         }
         
         Property("outstandingUserInfoTransfers") {
-            var transfers: [Any] = []
-            for transfer in WCSession.default.outstandingUserInfoTransfers {
-                transfers.append([
-                    "id": String(ObjectIdentifier(transfer).hashValue),
-                    "userInfo": transfer.userInfo,
-                    "isTransferring": transfer.isTransferring
-                ])
-            }
-            return transfers
+            controller.outstandingUserInfoTransfers
         }
 
         Property("outstandingFileTransfers") {
-            var transfers: [Any] = []
-            for transfer in WCSession.default.outstandingFileTransfers {
-                transfers.append([
-                    "id": String(ObjectIdentifier(transfer).hashValue),
-                    "isTransferring": transfer.isTransferring,
-                    "progress": [
-                        "fractionCompleted": transfer.progress.fractionCompleted,
-                        "completedUnitCount": transfer.progress.completedUnitCount,
-                        "totalUnitCount": transfer.progress.totalUnitCount
-                    ],
-                    "file": [
-                        "fileURL": transfer.file.fileURL.absoluteString,
-                        "metadata": transfer.file.metadata ?? [:]
-                    ]
-                ])
-            }
-            return transfers
+            controller.outstandingFileTransfers
         }
         
         // Functions
         
         AsyncFunction("sendMessage") { (message: [String: Any], promise: Promise) in
-            RnWatchConnectManager.shared.sendMessage(
+            self.controller.sendMessage(
                 message,
                 replyHandler: { reply in
                     promise.resolve(reply)
@@ -84,10 +59,7 @@ public class RnWatchConnectModule: Module {
         }
 
         AsyncFunction("sendMessageWithoutReply") { (message: [String: Any]) in
-            guard WCSession.default.isReachable else {
-                throw WatchConnectivityError.watchNotReachable
-            }
-            WCSession.default.sendMessage(message, replyHandler: nil, errorHandler: nil)
+            try self.controller.sendMessageWithoutReply(message)
         }
         
         AsyncFunction("replyToMessage") { (replyId: String, response: [String: Any]) in
@@ -101,10 +73,9 @@ public class RnWatchConnectModule: Module {
         
         AsyncFunction("sendDataMessage") { (data: String, promise: Promise) in
             do {
-                
                 let decodedData = try validateBase64(data)
                 
-                RnWatchConnectManager.shared.sendDataMessage(
+                self.controller.sendDataMessage(
                     decodedData,
                     replyHandler: { responseData in
                         promise.resolve(responseData.base64EncodedString())
@@ -120,43 +91,28 @@ public class RnWatchConnectModule: Module {
 
         AsyncFunction("sendDataMessageWithoutReply") { (data: String) in
             let decodedData = try validateBase64(data)
-            guard WCSession.default.isReachable else {
-                throw WatchConnectivityError.watchNotReachable
-            }
-            WCSession.default.sendMessageData(decodedData, replyHandler: nil, errorHandler: nil)
+            try self.controller.sendDataMessageWithoutReply(decodedData)
         }
         
         AsyncFunction("updateApplicationContext") { (applicationContext: [String: Any]) in
-            try WCSession.default.updateApplicationContext(applicationContext)
+            try self.controller.updateApplicationContext(applicationContext)
         }
 
-        Function("transferUserInfo") { (userInfo: [String: Any]) in
-           let transfer = WCSession.default.transferUserInfo(userInfo)
-            return [
-                "id": String(ObjectIdentifier(transfer).hashValue),
-                "isTransferring": transfer.isTransferring
-            ]
+        Function("transferUserInfo") { (userInfo: [String: Any]) -> [String: Any] in
+            self.controller.transferUserInfo(userInfo)
         }
 
         Function("cancelUserInfoTransfer") { (transferId: String) -> [String: Any] in
-            guard let transfer = WCSession.default.outstandingUserInfoTransfers.first(where: { String(ObjectIdentifier($0).hashValue) == transferId }) else {
-                throw UserInfoTransferError.invalidTransferId
-            }
-            transfer.cancel()
-            return ["id": transferId]
+            try self.controller.cancelUserInfoTransfer(id: transferId)
         }
 
         Function("transferFile") { (file: String, metadata: [String: Any]?) -> [String: Any] in
-            return try RnWatchConnectManager.shared.transferFile(file, metadata: metadata)
+            try self.controller.transferFile(file, metadata: metadata)
         }
         
         Function("cancelFileTransfer") { (transferId: String) -> [String: Any] in
-            guard let transfer = WCSession.default.outstandingFileTransfers.first(where: { String(ObjectIdentifier($0).hashValue) == transferId }) else {
-                throw FileTransferError.invalidTransferId
-            }
-            transfer.cancel()
-            return ["id": transferId]
-        } 
+            try self.controller.cancelFileTransfer(id: transferId)
+        }
 
         // Events
         Events(
