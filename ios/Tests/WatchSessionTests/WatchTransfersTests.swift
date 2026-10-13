@@ -285,6 +285,37 @@ final class WatchTransfersTests: XCTestCase {
         XCTAssertNil(lateEvent)
     }
 
+    // MARK: - Memory
+
+    func testCancelledTransferIsForgottenOnceWatchConnectivityReleasesIt() throws {
+        let id = try startFile().0.id
+        _ = try transfers.cancelFile(id: id)
+        XCTAssertEqual(transfers.trackedTransferCount, 1, "kept while a didFinish can still arrive")
+
+        port.outstandingFileTransfers.removeAll() // WatchConnectivity lets go, no didFinish
+
+        XCTAssertEqual(transfers.trackedTransferCount, 0)
+    }
+
+    func testTransferWithoutDidFinishIsForgottenOnceReleased() throws {
+        _ = try startFile()
+        _ = transfers.startUserInfo([:])
+        XCTAssertEqual(transfers.trackedTransferCount, 2)
+
+        port.outstandingFileTransfers.removeAll()
+        port.outstandingUserInfoTransfers.removeAll()
+
+        XCTAssertEqual(transfers.trackedTransferCount, 0)
+    }
+
+    func testFinishedTransfersLeaveNothingBehind() throws {
+        let (_, handle) = try startFile()
+
+        _ = deliver(handle)
+
+        XCTAssertEqual(transfers.trackedTransferCount, 0)
+    }
+
     // MARK: - Through the Controller
 
     func testControllerHandsTransfersToWatchTransfers() throws {
