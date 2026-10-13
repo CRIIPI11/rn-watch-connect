@@ -420,7 +420,7 @@ function ExampleScreen() {
           "Each transfer ends with exactly one finish event in Activity: delivered, failed, or cancelled.\n" +
           "Transfers still outstanding after a relaunch appear here with a new id, and can be cancelled.\n" +
           "Deleting the source file after starting doesn't stop a transfer: WatchConnectivity keeps its own copy. " +
-          "Uninstalling the watch app leaves a transfer outstanding, with no finish event, until you cancel it."
+          "Uninstalling the watch app leaves a transfer outstanding, with no finish event, until you cancel it (reinstalling doesn't deliver it)."
         }
       >
         <Text style={[styles.caption, { color: theme.secondaryText }]}>
