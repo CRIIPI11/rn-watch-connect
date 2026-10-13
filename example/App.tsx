@@ -1,6 +1,6 @@
 import { useEvent, useEventListener } from "expo";
 import { StatusBar } from "expo-status-bar";
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import {
   Pressable,
   ScrollView,
@@ -43,8 +43,6 @@ type LogEntry = {
   title: string;
   detail: string;
 };
-
-let nextLogId = 0;
 
 const isEmpty = (value: unknown) =>
   value == null ||
@@ -92,23 +90,21 @@ function ExampleScreen() {
   >([]);
   const [log, setLog] = useState<LogEntry[]>([]);
   const [busy, setBusy] = useState<string>();
+  // Lives in a ref so ids stay unique across Fast Refresh and repeated updater calls.
+  const nextLogId = useRef(0);
 
   const { transfers, sendTestFile, cancel } = useFileTransfers();
 
   const addLog = useCallback(
     (kind: LogEntry["kind"], title: string, detail: unknown = "") => {
-      setLog((prev) =>
-        [
-          {
-            id: nextLogId++,
-            time: new Date(),
-            kind,
-            title,
-            detail: describe(detail),
-          },
-          ...prev,
-        ].slice(0, 50),
-      );
+      const entry: LogEntry = {
+        id: nextLogId.current++,
+        time: new Date(),
+        kind,
+        title,
+        detail: describe(detail),
+      };
+      setLog((prev) => [entry, ...prev].slice(0, 50));
     },
     [],
   );

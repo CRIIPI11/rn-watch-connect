@@ -1,81 +1,53 @@
-import Combine
 import ExpoModulesCore
-import WatchConnectivity
 
 public class RnWatchConnectModule: Module {
     
-    private let manager = RnWatchConnectManager.shared
-    private var pendingReplies: [String: ([String: Any]) -> Void] = [:]
-    private var pendingDataReplies: [String: (Data) -> Void] = [:]
+    private let controller = WatchSessionController(port: WCWatchSessionAdapter())
     
     public func definition() -> ModuleDefinition {
         Name("RnWatchConnect")
         
         // Properties
         Property("isWatchSupported") {
-            manager.isSupported
+            controller.isSupported
         }
         
         Property("isWatchPaired") {
-            manager.isPaired
+            controller.isPaired
         }
         
         Property("isWatchAppInstalled") {
-            manager.isAppInstalled
+            controller.isWatchAppInstalled
         }
         
         Property("isWatchReachable") {
-            manager.isReachable
+            controller.isReachable
         }
         
         Property("watchActivationState") {
-            manager.activationState
+            controller.activationState.rawValue
         }
         
         Property("applicationContext") {
-            WCSession.default.applicationContext
+            controller.applicationContext
         }
         
         Property("receivedApplicationContext") {
-            WCSession.default.receivedApplicationContext
+            controller.receivedApplicationContext
         }
         
         Property("outstandingUserInfoTransfers") {
-            var transfers: [Any] = []
-            for transfer in WCSession.default.outstandingUserInfoTransfers {
-                transfers.append([
-                    "id": String(ObjectIdentifier(transfer).hashValue),
-                    "userInfo": transfer.userInfo,
-                    "isTransferring": transfer.isTransferring
-                ])
-            }
-            return transfers
+            controller.outstandingUserInfoTransfers
         }
 
         Property("outstandingFileTransfers") {
-            var transfers: [Any] = []
-            for transfer in WCSession.default.outstandingFileTransfers {
-                transfers.append([
-                    "id": String(ObjectIdentifier(transfer).hashValue),
-                    "isTransferring": transfer.isTransferring,
-                    "progress": [
-                        "fractionCompleted": transfer.progress.fractionCompleted,
-                        "completedUnitCount": transfer.progress.completedUnitCount,
-                        "totalUnitCount": transfer.progress.totalUnitCount
-                    ],
-                    "file": [
-                        "fileURL": transfer.file.fileURL.absoluteString,
-                        "metadata": transfer.file.metadata ?? [:]
-                    ]
-                ])
-            }
-            return transfers
+            controller.outstandingFileTransfers
         }
         
         // Functions
         
         AsyncFunction("sendMessage") { (message: [String: Any], promise: Promise) in
-            RnWatchConnectManager.shared.sendMessage(
+            self.controller.sendMessage(
                 message,
                 replyHandler: { reply in
                     promise.resolve(reply)
@@ -87,35 +59,23 @@ public class RnWatchConnectModule: Module {
         }
 
         AsyncFunction("sendMessageWithoutReply") { (message: [String: Any]) in
-            guard WCSession.default.isReachable else {
-                throw WatchConnectivityError.watchNotReachable
-            }
-            WCSession.default.sendMessage(message, replyHandler: nil, errorHandler: nil)
+            try self.controller.sendMessageWithoutReply(message)
         }
         
         AsyncFunction("replyToMessage") { (replyId: String, response: [String: Any]) in
-            guard let replyHandler = self.pendingReplies[replyId] else {
-                throw MessageError.invalidReplyId
-            }
-            replyHandler(response)
-            self.pendingReplies.removeValue(forKey: replyId)
+            try self.controller.replyToMessage(replyId: replyId, reply: response)
         }
 
         AsyncFunction("replyToDataMessage") { (replyId: String, response: String) in
-            guard let replyHandler = self.pendingDataReplies[replyId] else {
-                throw MessageError.invalidReplyId
-            }
             let decodedData = try validateBase64(response)
-            replyHandler(decodedData)
-            self.pendingDataReplies.removeValue(forKey: replyId)
+            try self.controller.replyToDataMessage(replyId: replyId, reply: decodedData)
         }
         
         AsyncFunction("sendDataMessage") { (data: String, promise: Promise) in
             do {
-                
                 let decodedData = try validateBase64(data)
                 
-                RnWatchConnectManager.shared.sendDataMessage(
+                self.controller.sendDataMessage(
                     decodedData,
                     replyHandler: { responseData in
                         promise.resolve(responseData.base64EncodedString())
@@ -131,43 +91,28 @@ public class RnWatchConnectModule: Module {
 
         AsyncFunction("sendDataMessageWithoutReply") { (data: String) in
             let decodedData = try validateBase64(data)
-            guard WCSession.default.isReachable else {
-                throw WatchConnectivityError.watchNotReachable
-            }
-            WCSession.default.sendMessageData(decodedData, replyHandler: nil, errorHandler: nil)
+            try self.controller.sendDataMessageWithoutReply(decodedData)
         }
         
         AsyncFunction("updateApplicationContext") { (applicationContext: [String: Any]) in
-            try WCSession.default.updateApplicationContext(applicationContext)
+            try self.controller.updateApplicationContext(applicationContext)
         }
 
-        Function("transferUserInfo") { (userInfo: [String: Any]) in
-           let transfer = WCSession.default.transferUserInfo(userInfo)
-            return [
-                "id": String(ObjectIdentifier(transfer).hashValue),
-                "isTransferring": transfer.isTransferring
-            ]
+        Function("transferUserInfo") { (userInfo: [String: Any]) -> [String: Any] in
+            self.controller.transferUserInfo(userInfo)
         }
 
         Function("cancelUserInfoTransfer") { (transferId: String) -> [String: Any] in
-            guard let transfer = WCSession.default.outstandingUserInfoTransfers.first(where: { String(ObjectIdentifier($0).hashValue) == transferId }) else {
-                throw UserInfoTransferError.invalidTransferId
-            }
-            transfer.cancel()
-            return ["id": transferId]
+            try self.controller.cancelUserInfoTransfer(id: transferId)
         }
 
         Function("transferFile") { (file: String, metadata: [String: Any]?) -> [String: Any] in
-            return try RnWatchConnectManager.shared.transferFile(file, metadata: metadata)
+            try self.controller.transferFile(file, metadata: metadata)
         }
         
         Function("cancelFileTransfer") { (transferId: String) -> [String: Any] in
-            guard let transfer = WCSession.default.outstandingFileTransfers.first(where: { String(ObjectIdentifier($0).hashValue) == transferId }) else {
-                throw FileTransferError.invalidTransferId
-            }
-            transfer.cancel()
-            return ["id": transferId]
-        } 
+            try self.controller.cancelFileTransfer(id: transferId)
+        }
 
         // Events
         Events(
@@ -183,78 +128,41 @@ public class RnWatchConnectModule: Module {
             "onFileReceived"
         )
         
-        OnStartObserving {
-            
-            manager.$isPaired
-                .sink { [weak self] value in
-                    self?.sendEvent("onWatchPairedChanged", ["isPaired": value])
-                }
-                .store(in: &cancellables)
-            
-            manager.$isAppInstalled
-                .sink { [weak self] value in
-                    self?.sendEvent("onWatchAppInstallChanged", ["isAppInstalled": value])
-                }
-                .store(in: &cancellables)
-            
-            manager.$isReachable
-                .sink { [weak self] value in
-                    self?.sendEvent("onReachabilityChanged", ["isReachable": value])
-                }
-                .store(in: &cancellables)
-            
-            manager.messageReceivedHandler = { [weak self] message in
-                self?.sendEvent("onMessageReceived", message)
+        OnCreate {
+            controller.onEvent = { [weak self] event in
+                self?.send(event)
             }
-            
-            manager.messageWithReplyHandler = { [weak self] message, reply in
-                let replyId = UUID().uuidString
-                self?.pendingReplies[replyId] = reply
-                self?.sendEvent("onMessageWithReply", [
-                    "message": message,
-                    "replyId": replyId
-                ])
-            }
-
-            manager.messageDataReceivedHandler = { [weak self] data in
-                self?.sendEvent("onDataMessageReceived", ["data": data.base64EncodedString()])
-            }
-
-            manager.messageDataWithReplyHandler = { [weak self] data, reply in
-                let replyId = UUID().uuidString
-                self?.pendingDataReplies[replyId] = reply
-                self?.sendEvent("onDataMessageWithReply", [
-                    "data": data.base64EncodedString(),
-                    "replyId": replyId
-                ])
-            }
-
-            manager.$applicationContext.sink { [weak self] applicationContext in
-                self?.sendEvent("onApplicationContextChanged", applicationContext)
-            }
-            .store(in: &cancellables)
-
-            manager.$userInfo.sink { [weak self] userInfo in
-                self?.sendEvent("onUserInfoReceived", userInfo)
-            }
-            .store(in: &cancellables)
-
-            manager.$receivedFile.sink { [weak self] file in
-                self?.sendEvent("onFileReceived", file)
-            }
-            .store(in: &cancellables)
+            controller.activate()
         }
         
+        // Runs once the last JS listener is removed: nobody is left to answer pending Replies.
         OnStopObserving {
-            cancellables.removeAll()
-            manager.messageReceivedHandler = nil
-            manager.messageWithReplyHandler = nil
-            manager.messageDataReceivedHandler = nil
-            manager.messageDataWithReplyHandler = nil
-            pendingReplies.removeAll()
-            pendingDataReplies.removeAll()
+            controller.dropPendingReplies()
         }
     }
     
-    private var cancellables: Set<AnyCancellable> = []
+    private func send(_ event: SessionEvent) {
+        switch event {
+        case let .pairedChanged(isPaired):
+            sendEvent("onWatchPairedChanged", ["isWatchPaired": isPaired])
+        case let .watchAppInstalledChanged(isAppInstalled):
+            sendEvent("onWatchAppInstallChanged", ["isWatchAppInstalled": isAppInstalled])
+        case let .reachabilityChanged(isReachable):
+            sendEvent("onReachabilityChanged", ["isWatchReachable": isReachable])
+        case let .message(message):
+            sendEvent("onMessageReceived", message)
+        case let .messageWithReply(message, replyId):
+            sendEvent("onMessageWithReply", ["message": message, "replyId": replyId])
+        case let .dataMessage(data):
+            sendEvent("onDataMessageReceived", ["data": data.base64EncodedString()])
+        case let .dataMessageWithReply(data, replyId):
+            sendEvent("onDataMessageWithReply", ["data": data.base64EncodedString(), "replyId": replyId])
+        case let .applicationContext(applicationContext):
+            sendEvent("onApplicationContextChanged", applicationContext)
+        case let .userInfo(userInfo):
+            sendEvent("onUserInfoReceived", userInfo)
+        case let .fileReceived(fileURL, metadata):
+            sendEvent("onFileReceived", ["fileURL": fileURL.absoluteString, "metadata": metadata])
+        }
+    }
 }

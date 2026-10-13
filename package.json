@@ -10,6 +10,7 @@
     "typecheck": "expo-module typecheck",
     "lint": "oxlint src",
     "test": "expo-module test",
+    "test:ios": "swift test --package-path ios",
     "prepare": "expo-module prepare",
     "prepublishOnly": "expo-module prepublishOnly",
     "expo-module": "expo-module",
