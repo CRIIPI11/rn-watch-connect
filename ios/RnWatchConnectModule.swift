@@ -144,11 +144,11 @@ public class RnWatchConnectModule: Module {
     private func send(_ event: SessionEvent) {
         switch event {
         case let .pairedChanged(isPaired):
-            sendEvent("onWatchPairedChanged", ["isPaired": isPaired])
+            sendEvent("onWatchPairedChanged", ["isWatchPaired": isPaired])
         case let .watchAppInstalledChanged(isAppInstalled):
-            sendEvent("onWatchAppInstallChanged", ["isAppInstalled": isAppInstalled])
+            sendEvent("onWatchAppInstallChanged", ["isWatchAppInstalled": isAppInstalled])
         case let .reachabilityChanged(isReachable):
-            sendEvent("onReachabilityChanged", ["isReachable": isReachable])
+            sendEvent("onReachabilityChanged", ["isWatchReachable": isReachable])
         case let .message(message):
             sendEvent("onMessageReceived", message)
         case let .messageWithReply(message, replyId):
