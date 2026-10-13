@@ -419,6 +419,12 @@ If you cancel a Transfer that was already delivered, the cancel throws `Invalid 
 
 WatchConnectivity has no progress event. To show progress, read `outstandingFileTransfers` periodically, and use this event to know when a Transfer is done.
 
+Good to know:
+
+- **Deleting your file after starting a File Transfer doesn't stop or fail it.** WatchConnectivity keeps its own copy, so you can delete the source right after calling `transferFile`.
+- **If the Watch app is uninstalled during a Transfer, the Transfer stays outstanding** and no finish event is sent. Cancel it to end it.
+- **After your app relaunches**, Transfers that are still outstanding have **new ids**. Read `outstandingFileTransfers` / `outstandingUserInfoTransfers` at launch to pick them up. Their finish events, and `cancel…Transfer`, use the new ids.
+
 **Example:**
 
 ```typescript

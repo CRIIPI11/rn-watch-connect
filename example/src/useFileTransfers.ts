@@ -1,7 +1,7 @@
 import { useEventListener } from "expo";
 import { File, FileMode, Paths } from "expo-file-system";
 import { useCallback, useEffect, useState } from "react";
-import RnWatchConnect from "rn-watch-connect";
+import RnWatchConnect, { type FileTransfer } from "rn-watch-connect";
 
 export type TransferStatus = "sending" | "delivered" | "failed" | "cancelled";
 
@@ -9,7 +9,6 @@ export type TrackedTransfer = {
   id: string;
   name: string;
   size: number;
-  uri: string;
   fraction: number;
   status: TransferStatus;
   error?: string;
@@ -42,15 +41,54 @@ function writeTestFile(name: string, bytes: number): File {
   return file;
 }
 
+/** A transfer this app run did not start, e.g. one still outstanding from before a relaunch. */
+function adopt(transfer: FileTransfer): TrackedTransfer {
+  const name =
+    transfer.file.metadata?.name ?? transfer.file.fileURL.split("/").pop() ?? "file";
+  return {
+    id: transfer.id,
+    name,
+    size: transfer.file.metadata?.size ?? transfer.progress.totalUnitCount,
+    fraction: transfer.progress.fractionCompleted,
+    status: "sending",
+  };
+}
+
+/**
+ * Updates progress from `outstandingFileTransfers`, and adds transfers this app run has not
+ * seen yet. Returns `prev` itself when nothing changed, so a hanging transfer does not make
+ * the screen re-render on every poll.
+ */
+function merge(prev: TrackedTransfer[], outstanding: FileTransfer[]): TrackedTransfer[] {
+  let changed = false;
+  const next = prev.map((transfer) => {
+    if (transfer.status !== "sending") return transfer;
+    const current = outstanding.find((t) => t.id === transfer.id);
+    // Not listed any more: keep the last progress until the finish event says how it ended.
+    if (!current || current.progress.fractionCompleted === transfer.fraction) return transfer;
+    changed = true;
+    return { ...transfer, fraction: current.progress.fractionCompleted };
+  });
+  const unknown = outstanding.filter((t) => !prev.some((p) => p.id === t.id));
+  if (unknown.length > 0) changed = true;
+  return changed ? [...next, ...unknown.map(adopt)] : prev;
+}
+
 /**
  * Starts file transfers to the watch and tracks them.
  *
  * Progress comes from polling `outstandingFileTransfers`, because WatchConnectivity has no
  * progress event. Whether a transfer is done comes only from `onFileTransferFinished`, which
  * fires exactly once per transfer: delivered, failed, or cancelled.
+ *
+ * Transfer ids are valid only for the current app run. After a relaunch, a transfer that is
+ * still outstanding shows up in `outstandingFileTransfers` with a new id, so the list starts
+ * from there and stays cancellable.
  */
 export function useFileTransfers() {
-  const [transfers, setTransfers] = useState<TrackedTransfer[]>([]);
+  const [transfers, setTransfers] = useState<TrackedTransfer[]>(() =>
+    RnWatchConnect.outstandingFileTransfers.map(adopt),
+  );
   const [lastFinishedId, setLastFinishedId] = useState<string>();
   const isSending = transfers.some((t) => t.status === "sending");
 
@@ -58,16 +96,7 @@ export function useFileTransfers() {
     if (!isSending) return;
     const interval = setInterval(() => {
       const outstanding = RnWatchConnect.outstandingFileTransfers;
-      setTransfers((prev) =>
-        prev.map((transfer) => {
-          if (transfer.status !== "sending") return transfer;
-          const current = outstanding.find((t) => t.id === transfer.id);
-          // Not listed any more: keep the last progress until the finish event says how it ended.
-          return current
-            ? { ...transfer, fraction: current.progress.fractionCompleted }
-            : transfer;
-        }),
-      );
+      setTransfers((prev) => merge(prev, outstanding));
     }, POLL_INTERVAL_MS);
     return () => clearInterval(interval);
   }, [isSending]);
@@ -109,7 +138,7 @@ export function useFileTransfers() {
     const transfer = RnWatchConnect.transferFile(file.uri, { name, size });
     setTransfers((prev) => [
       ...prev,
-      { id: transfer.id, name, size, uri: file.uri, fraction: 0, status: "sending" },
+      { id: transfer.id, name, size, fraction: 0, status: "sending" },
     ]);
     return transfer;
   }, []);
@@ -126,23 +155,11 @@ export function useFileTransfers() {
     RnWatchConnect.cancelFileTransfer(id);
   }, []);
 
-  /** Deletes a running transfer's source file, to see whether WatchConnectivity fails it. */
-  const deleteSource = useCallback(
-    (id: string) => {
-      const transfer = transfers.find((t) => t.id === id);
-      if (!transfer) return;
-      const file = new File(transfer.uri);
-      if (file.exists) file.delete();
-    },
-    [transfers],
-  );
-
   return {
     transfers,
     lastFinishedId,
     sendTestFile,
     sendMissingFile,
     cancel,
-    deleteSource,
   };
 }

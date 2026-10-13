@@ -29,6 +29,8 @@ Run these first; if any fail, stop and fix before the edge cases.
 - [ ] `transferUserInfo` arrives on the watch; watch-side user info fires `onUserInfoReceived`.
 - [ ] `transferFile` arrives on the watch; watch-side file fires `onFileReceived` with a readable `fileURL` and its `metadata`.
 
+
+
 ## 2. Status events
 
 - [ ] Event payload keys match the TypeScript types: `onReachabilityChanged` → `isWatchReachable`, `onWatchPairedChanged` → `isWatchPaired`, `onWatchAppInstallChanged` → `isWatchAppInstalled`.
@@ -37,20 +39,26 @@ Run these first; if any fail, stop and fix before the edge cases.
 - [ ] Uninstall the watch app → `onWatchAppInstallChanged(false)`; reinstall → `true`.
 - [ ] Adding the first listener does **not** fire spurious empty events (`onUserInfoReceived({})`, `onFileReceived({})`, `onApplicationContextChanged({})`).
 
+
+
 ## 3. App lifecycle
 
-- [ ] **Cold launch from the watch.** Force-quit the iPhone app, send a message from the watch. Record whether the app is woken and whether the message reaches JS or is silently dropped. _(At time of writing handlers are_ `nil` _until JS subscribes, so it is expected to be dropped.)_
+- [ ] **Cold launch from the watch.** Force-quit the iPhone app, send a message from the watch. Record whether the app is woken and whether the message reaches JS or is silently dropped. *(At time of writing handlers are* `nil` *until JS subscribes, so it is expected to be dropped.)*
 - [ ] **Background delivery.** With the iPhone app backgrounded, send user info and a file from the watch; foreground the app and confirm both events arrive (queued transfers are delivered even when not reachable).
 - [ ] **Application context while killed.** Update context on the watch while the iPhone app is force-quit; relaunch; confirm `receivedApplicationContext` holds the latest value.
 - [ ] **JS reload.** Reload the JS bundle (Metro `r`) and repeat a send and a receive — the native session persists, so listeners must re-attach cleanly with no duplicated events.
 
+
+
 ## 4. Replies
 
-- [ ] **Reply after unmount.** Receive `onMessageWithReply`, unmount the listening component (removing the last listener) before calling `replyToMessage`. Record whether the reply throws `Invalid reply ID` and how long the watch waits before its error handler fires. _(At time of writing_ `OnStopObserving` _clears pending replies.)_
+- [ ] **Reply after unmount.** Receive `onMessageWithReply`, unmount the listening component (removing the last listener) before calling `replyToMessage`. Record whether the reply throws `Invalid reply ID` and how long the watch waits before its error handler fires. *(At time of writing* `OnStopObserving` *clears pending replies.)*
 - [ ] **No reply.** Receive `onMessageWithReply` and never reply. Note how long until the watch's error handler fires.
 - [ ] **Slow reply.** Reply after ~10 s and after ~60 s; record which still reach the watch.
 - [ ] **Double reply.** Call `replyToMessage` twice with the same `replyId`; the second must throw, not crash.
 - [ ] **Burst.** Have the watch send 20 messages-with-reply in quick succession; reply to all; every reply arrives, no crash (exercises concurrent access to the pending-reply store).
+
+
 
 ## 5. Transfers
 
@@ -62,11 +70,14 @@ Use the example app's **File transfers** section (the Transfer playground). Each
 - [ ] **Cancel one of two.** Start two huge files and cancel the first: only the first ends as cancelled, and the second is delivered.
 - [ ] **Late cancel.** After a transfer is delivered, press **Cancel finished**: it throws `Invalid transfer ID`, nothing else is cancelled, and no new finish event appears.
 - [ ] **Failed at start.** Press **Missing file**: it throws `File not found` right away, and **no** finish event follows.
-- [ ] **Failed while sending: delete source.** Start "Huge file", then press **Delete source**. Record what happens: a failed finish event (record its message), delivery anyway, or something else.
-- [ ] **Failed while sending: manual triggers.** Start "Huge file", then uninstall the watch app (or unpair the watch). Record which trigger produces a failed finish event, and its message. Update the playground footer and README if the results differ from what they say.
-- [ ] **Kill mid-transfer.** Start a large file transfer, force-quit the app, relaunch. Record whether it still appears in `outstandingFileTransfers`, whether it has an ID, and whether that ID can be cancelled.
-- [ ] **Same as above for user info:** queue several `transferUserInfo` calls while the watch is unreachable, kill and relaunch, inspect `outstandingUserInfoTransfers`, cancel one.
-- [ ] **Received file name collision.** Have the watch send two different files with the same file name back to back; confirm JS can read both with the right contents. _(At time of writing both are copied to_ `tmp/<name>`_, so the second overwrites the first.)_
+- [ ] **Delete source while sending.** Start "Huge file" and delete its source file. *(Result on iOS 27.0.1: still delivered. WatchConnectivity keeps its own copy, so this is not a failure trigger.)*
+- [ ] **Uninstall the watch app while sending.** Start "Huge file", then uninstall the watch app. Record what happens. *(Result on iOS 27.0.1 / watchOS 27.0.1: progress reaches 100 %, the transfer stays in `outstandingFileTransfers`, and no finish event fires. **Cancel** ends it with one "Transfer cancelled" event. Also record what happens after the watch app is reinstalled.)*
+- [ ] **Unpair the watch while sending.** Record whether this produces a failed finish event, and its message.
+- [ ] **Kill mid-transfer.** Start "Huge file", force-quit the app, relaunch. The transfer appears in the File transfers list with a **new** id (ids are valid for one app run), its progress continues, and **Cancel** works with one "Transfer cancelled" event.
+- [ ] **Same for User Info.** Turn off Bluetooth on the iPhone, press "Transfer user info" a few times, force-quit and relaunch. The User info section lists them as "Outstanding" with new ids. Cancel one: one "User info transfer ended … Transfer cancelled" event. Turn Bluetooth back on: the rest are delivered, each with one "User info delivered" event.
+- [ ] **Received file name collision.** On the watch app, press **Send file** twice, a few seconds apart (both are named `from-watch.txt`, with different timestamps inside). Activity shows each file's text as it arrives. Then press **Re-read received files** on the iPhone: each file must still show its own text ("Re-read: unchanged"). *(At time of writing both are copied to* `tmp/<name>`*, so the second overwrites the first.)*
+
+
 
 ## 6. Input edge cases
 
@@ -79,14 +90,19 @@ Use the example app's **File transfers** section (the Transfer playground). Each
 - [ ] Message payload near the size limit: send a dictionary of roughly 60 KB and roughly 100 KB; the oversized one must reject with an error, not hang.
 - [ ] Payload with non-property-list values (e.g. `null`, nested `undefined`) → rejects cleanly.
 
+
+
 ## 7. Session state changes
 
 - [ ] **Watch switching** (needs two watches). Switch the active watch in the Watch app; confirm the session reactivates (`sessionDidDeactivate` → `activate()`), `watchActivationState` returns to `"activated"`, and messaging works with the new watch.
 - [ ] **Unpair** the watch → `onWatchPairedChanged(false)`, sends reject cleanly; re-pair → recovers without an app restart.
 - [ ] **Airplane mode** on the iPhone during a file transfer → transfer pauses and resumes when connectivity returns.
 
+
+
 ## Keeping this current
 
 - When a "known issue" above is fixed, remove the note and keep the check as a regression test.
 - When a scenario gains a unit test that fully covers it, move it out of this list.
 - Add a scenario here whenever a bug report turns out to be device- or OS-version-specific.
+

@@ -1,4 +1,5 @@
 import { useEvent, useEventListener } from "expo";
+import { File } from "expo-file-system";
 import { StatusBar } from "expo-status-bar";
 import { useCallback, useRef, useState } from "react";
 import {
@@ -31,6 +32,7 @@ import {
 } from "./src/encoding";
 import { ACCENTS, useTheme } from "./src/theme";
 import { useFileTransfers } from "./src/useFileTransfers";
+import { useOutstandingUserInfo } from "./src/useOutstandingUserInfo";
 
 // Shared with the watch app in targets/watch/ConnectivityStore.swift.
 type TextMessage = { text: string };
@@ -43,6 +45,15 @@ type LogEntry = {
   title: string;
   detail: string;
 };
+
+/** A received file's text, or why it can't be read. */
+function readText(uri: string): string {
+  try {
+    return new File(uri).textSync();
+  } catch (error) {
+    return `(can't read: ${error instanceof Error ? error.message : String(error)})`;
+  }
+}
 
 /** Short Transfer id for the Activity log, to match a start with its finish event. */
 const shortId = (id: string) => id.slice(0, 8);
@@ -89,7 +100,7 @@ function ExampleScreen() {
   );
   const [receivedUserInfo, setReceivedUserInfo] = useState<object>();
   const [receivedFiles, setReceivedFiles] = useState<
-    { name: string; uri: string }[]
+    { name: string; uri: string; contents: string }[]
   >([]);
   const [log, setLog] = useState<LogEntry[]>([]);
   const [busy, setBusy] = useState<string>();
@@ -102,8 +113,9 @@ function ExampleScreen() {
     sendTestFile,
     sendMissingFile,
     cancel,
-    deleteSource,
   } = useFileTransfers();
+  const { outstanding: outstandingUserInfo, refresh: refreshUserInfo } =
+    useOutstandingUserInfo();
 
   const addLog = useCallback(
     (kind: LogEntry["kind"], title: string, detail: unknown = "") => {
@@ -184,8 +196,10 @@ function ExampleScreen() {
   useEventListener(RnWatchConnect, "onFileReceived", (file) => {
     if (!file?.fileURL) return;
     const name = file.metadata?.name ?? file.fileURL.split("/").pop() ?? "file";
-    setReceivedFiles((prev) => [{ name, uri: file.fileURL }, ...prev]);
-    addLog("in", "File", name);
+    // Read right away: "Re-read received files" later shows whether the file still holds this.
+    const contents = readText(file.fileURL);
+    setReceivedFiles((prev) => [{ name, uri: file.fileURL, contents }, ...prev]);
+    addLog("in", "File", `${name}: ${contents}`);
   });
 
   // Exactly one per transfer: delivered (error: null), failed, or cancelled.
@@ -363,7 +377,7 @@ function ExampleScreen() {
 
       <Section
         title="User info"
-        footer="Queued and delivered in order, even in the background."
+        footer="Queued and delivered in order, even in the background. To keep one outstanding (e.g. to test a relaunch), turn off Bluetooth on the iPhone first."
       >
         <ActionButton
           title="Transfer user info"
@@ -372,9 +386,28 @@ function ExampleScreen() {
               const info = { from: "iPhone", sentAt: new Date().toISOString() };
               const { id } = RnWatchConnect.transferUserInfo(info);
               addLog("out", "User info", `${shortId(id)} · ${describe(info)}`);
+              refreshUserInfo();
             })
           }
         />
+        {outstandingUserInfo.map((transfer) => (
+          <View key={transfer.id} style={styles.transferHeader}>
+            <Text style={[styles.caption, { color: theme.secondaryText }]}>
+              {`Outstanding · ${shortId(transfer.id)}`}
+            </Text>
+            <Pressable
+              onPress={() =>
+                run("Cancel user info", () => {
+                  RnWatchConnect.cancelUserInfoTransfer(transfer.id);
+                  refreshUserInfo();
+                })
+              }
+              hitSlop={8}
+            >
+              <Text style={{ color: theme.danger }}>Cancel</Text>
+            </Pressable>
+          </View>
+        ))}
         <ValueRow
           label="Received from watch"
           value={describe(receivedUserInfo)}
@@ -385,7 +418,9 @@ function ExampleScreen() {
         title="File transfers"
         footer={
           "Each transfer ends with exactly one finish event in Activity: delivered, failed, or cancelled.\n" +
-          "Other ways to make a transfer fail: uninstall the watch app, or unpair the watch, while a huge file is sending."
+          "Transfers still outstanding after a relaunch appear here with a new id, and can be cancelled.\n" +
+          "Deleting the source file after starting doesn't stop a transfer: WatchConnectivity keeps its own copy. " +
+          "Uninstalling the watch app leaves a transfer outstanding, with no finish event, until you cancel it."
         }
       >
         <Text style={[styles.caption, { color: theme.secondaryText }]}>
@@ -413,7 +448,7 @@ function ExampleScreen() {
           />
         </ButtonRow>
         <Text style={[styles.caption, { color: theme.secondaryText }]}>
-          Slow enough to cancel, or to delete its source while sending
+          Slow enough to cancel while it sends
         </Text>
         <ActionButton
           title="Huge file · 50 MB"
@@ -461,25 +496,12 @@ function ExampleScreen() {
                 {transfer.name}
               </Text>
               {transfer.status === "sending" ? (
-                <View style={styles.transferActions}>
-                  <Pressable
-                    onPress={() =>
-                      run("Delete source", () => {
-                        deleteSource(transfer.id);
-                        addLog("out", "Deleted source", transfer.name);
-                      })
-                    }
-                    hitSlop={8}
-                  >
-                    <Text style={{ color: theme.tint }}>Delete source</Text>
-                  </Pressable>
-                  <Pressable
-                    onPress={() => run("Cancel", () => cancel(transfer.id))}
-                    hitSlop={8}
-                  >
-                    <Text style={{ color: theme.danger }}>Cancel</Text>
-                  </Pressable>
-                </View>
+                <Pressable
+                  onPress={() => run("Cancel", () => cancel(transfer.id))}
+                  hitSlop={8}
+                >
+                  <Text style={{ color: theme.danger }}>Cancel</Text>
+                </Pressable>
               ) : (
                 <Text
                   style={{
@@ -511,6 +533,25 @@ function ExampleScreen() {
               : "—"
           }
         />
+        {receivedFiles.length > 0 && (
+          <ActionButton
+            title="Re-read received files"
+            variant="tinted"
+            onPress={() =>
+              run("Re-read received files", () => {
+                // Oldest first. A file whose contents changed since it arrived was overwritten.
+                [...receivedFiles].reverse().forEach((file) => {
+                  const now = readText(file.uri);
+                  addLog(
+                    now === file.contents ? "in" : "error",
+                    now === file.contents ? "Re-read: unchanged" : "Re-read: overwritten",
+                    `${file.name}: ${now}`,
+                  );
+                });
+              })
+            }
+          />
+        )}
       </Section>
 
       <Section title={`Activity${log.length ? ` (${log.length})` : ""}`}>
@@ -604,10 +645,6 @@ const styles = StyleSheet.create({
   },
   transfer: {
     gap: 6,
-  },
-  transferActions: {
-    flexDirection: "row",
-    gap: 16,
   },
   transferHeader: {
     flexDirection: "row",
