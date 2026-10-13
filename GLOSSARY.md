@@ -58,8 +58,15 @@ _Avoid_: User data, profile
 A file, with optional metadata, queued for background delivery to the Watch.
 
 **Transfer**:
-An outstanding User Info or File Transfer that has not been delivered yet. It can be inspected or cancelled by its Transfer id.
+An outstanding User Info or File Transfer that has not been delivered yet. It can be inspected or cancelled by its Transfer id, and it ends with exactly one finish event: delivered, failed, or cancelled.
 _Avoid_: Job, upload
+
+**Transfer id**:
+The identifier of one Transfer, valid only for the current app run. After the app restarts, an outstanding Transfer gets a new one.
+
+**Transfer snapshot**:
+The state of one Transfer at one moment. A Transfer has the same snapshot shape whether it comes from starting it, listing it, or its finish event.
+_Avoid_: Transfer info, transfer status
 
 **Received file**:
 A file the Watch sent to the iPhone, kept by the library at a location the app can read.

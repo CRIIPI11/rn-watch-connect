@@ -403,6 +403,34 @@ useEventListener(RnWatchConnect, "onFileReceived", (event) => {
 });
 ```
 
+#### `onUserInfoTransferFinished` / `onFileTransferFinished`
+
+Triggered when a Transfer finishes. **Each Transfer gets exactly one of these events**, however it ends:
+
+| How it ended | `error` |
+| --- | --- |
+| Delivered to the Watch | `null` |
+| Failed | `{ message }` from WatchConnectivity |
+| Cancelled with `cancelUserInfoTransfer` / `cancelFileTransfer` | `{ message: "Transfer cancelled" }`, sent immediately when you cancel |
+
+The event object is the Transfer snapshot ([`OutstandingUserInfoTransfer`](#outstandinguserinfotransfer) or [`FileTransfer`](#filetransfer)) plus `error`.
+
+If you cancel a Transfer that was already delivered, the cancel throws `Invalid transfer ID`, and this event reports the delivery with `error: null`.
+
+WatchConnectivity has no progress event. To show progress, read `outstandingFileTransfers` periodically, and use this event to know when a Transfer is done.
+
+**Example:**
+
+```typescript
+useEventListener(RnWatchConnect, "onFileTransferFinished", (transfer) => {
+  if (transfer.error) {
+    console.log("Transfer failed:", transfer.id, transfer.error.message);
+  } else {
+    console.log("Transfer delivered:", transfer.file.fileURL);
+  }
+});
+```
+
 #### `onReachabilityChanged`
 
 Triggered when the Watch's reachability status changes.
@@ -467,6 +495,8 @@ useEventListener(
 ```
 
 ## Types
+
+> **Transfer ids** (`id` on the types below) are valid only for the current app run. After the app restarts, a Transfer that is still outstanding gets a new id.
 
 ### `OutstandingUserInfoTransfer`
 

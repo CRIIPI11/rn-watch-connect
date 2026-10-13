@@ -29,6 +29,21 @@ export type FileTransfer = {
   file: File;
 };
 
+/** Why a Transfer finished without being delivered. `null` in a finish event means it was delivered. */
+export type TransferFinishError = {
+  message: string;
+};
+
+/** Sent exactly once per User Info Transfer, when it was delivered, failed or was cancelled. */
+export type UserInfoTransferFinishedEvent = OutstandingUserInfoTransfer & {
+  error: TransferFinishError | null;
+};
+
+/** Sent exactly once per File Transfer, when it was delivered, failed or was cancelled. */
+export type FileTransferFinishedEvent = FileTransfer & {
+  error: TransferFinishError | null;
+};
+
 export type RnWatchConnectModuleEvents = {
   /** Triggered when the Watch's reachability status changes */
   onReachabilityChanged: (params: { isWatchReachable: boolean }) => void;
@@ -50,6 +65,10 @@ export type RnWatchConnectModuleEvents = {
   onUserInfoReceived: (params: any) => void;
   /** Triggered when a file is received from the Watch */
   onFileReceived: (params: File) => void;
+  /** Triggered exactly once per User Info Transfer: delivered (`error: null`), failed, or cancelled */
+  onUserInfoTransferFinished: (event: UserInfoTransferFinishedEvent) => void;
+  /** Triggered exactly once per File Transfer: delivered (`error: null`), failed, or cancelled */
+  onFileTransferFinished: (event: FileTransferFinishedEvent) => void;
 };
 
 // Define the strict interface for the module

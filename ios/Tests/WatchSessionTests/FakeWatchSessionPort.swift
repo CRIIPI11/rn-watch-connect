@@ -34,6 +34,17 @@ final class FakeWatchSessionPort: WatchSessionPort {
         onEvent?(event)
     }
 
+    /// Like WatchConnectivity: the Transfer leaves the outstanding list, then `didFinish` arrives.
+    func finish(_ transfer: UserInfoTransferHandle, error: Error? = nil) {
+        outstandingUserInfoTransfers.removeAll { $0 === transfer }
+        simulate(.userInfoTransferFinished(transfer, error: error))
+    }
+
+    func finish(_ transfer: FileTransferHandle, error: Error? = nil) {
+        outstandingFileTransfers.removeAll { $0 === transfer }
+        simulate(.fileTransferFinished(transfer, error: error))
+    }
+
     // MARK: - WatchSessionPort
 
     func activate() {

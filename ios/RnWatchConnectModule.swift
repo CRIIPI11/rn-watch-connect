@@ -127,7 +127,9 @@ public class RnWatchConnectModule: Module {
             "onDataMessageWithReply",
             "onApplicationContextChanged",
             "onUserInfoReceived",
-            "onFileReceived"
+            "onFileReceived",
+            "onUserInfoTransferFinished",
+            "onFileTransferFinished"
         )
         
         OnCreate {
@@ -165,10 +167,18 @@ public class RnWatchConnectModule: Module {
             sendEvent("onUserInfoReceived", userInfo)
         case let .fileReceived(fileURL, metadata):
             sendEvent("onFileReceived", ["fileURL": fileURL.absoluteString, "metadata": metadata])
+        case let .userInfoTransferFinished(transfer, error):
+            sendEvent("onUserInfoTransferFinished", Self.jsValue(transfer).merging(Self.jsError(error)) { $1 })
+        case let .fileTransferFinished(transfer, error):
+            sendEvent("onFileTransferFinished", Self.jsValue(transfer).merging(Self.jsError(error)) { $1 })
         }
     }
     
-    // MARK: - JS shapes (OutstandingUserInfoTransfer, FileTransfer in RnWatchConnect.types.ts)
+    // MARK: - JS shapes (OutstandingUserInfoTransfer, FileTransfer, TransferFinishError in RnWatchConnect.types.ts)
+    
+    private static func jsError(_ error: Error?) -> [String: Any] {
+        ["error": error.map { ["message": $0.localizedDescription] } ?? NSNull()]
+    }
     
     private static func jsValue(_ transfer: UserInfoTransferSnapshot) -> [String: Any] {
         [

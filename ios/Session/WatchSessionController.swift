@@ -105,29 +105,33 @@ final class WatchSessionController {
 
     // MARK: - Transfers
 
+    // Every call runs on `queue`, where WatchTransfers keeps its Transfer registry.
+
     func transferUserInfo(_ userInfo: [String: Any]) -> UserInfoTransferSnapshot {
-        transfers.startUserInfo(userInfo)
+        onQueue { transfers.startUserInfo(userInfo) }
     }
 
     var outstandingUserInfoTransfers: [UserInfoTransferSnapshot] {
-        transfers.outstandingUserInfo
+        onQueue { transfers.outstandingUserInfo }
     }
 
+    /// Cancels the Transfer and emits its finish event right away.
     func cancelUserInfoTransfer(id: String) throws {
-        try transfers.cancelUserInfo(id: id)
+        try onQueue { emit(try transfers.cancelUserInfo(id: id)) }
     }
 
     /// - Parameter file: a file URL string; the file must exist.
     func transferFile(_ file: String, metadata: [String: Any]?) throws -> FileTransferSnapshot {
-        try transfers.startFile(file, metadata: metadata)
+        try onQueue { try transfers.startFile(file, metadata: metadata) }
     }
 
     var outstandingFileTransfers: [FileTransferSnapshot] {
-        transfers.outstandingFiles
+        onQueue { transfers.outstandingFiles }
     }
 
+    /// Cancels the Transfer and emits its finish event right away.
     func cancelFileTransfer(id: String) throws {
-        try transfers.cancelFile(id: id)
+        try onQueue { emit(try transfers.cancelFile(id: id)) }
     }
 
     // MARK: - Replies
@@ -210,6 +214,10 @@ final class WatchSessionController {
             emit(.applicationContext(applicationContext))
         case let .userInfo(userInfo):
             emit(.userInfo(userInfo))
+        case let .userInfoTransferFinished(handle, error):
+            if let event = transfers.userInfoFinished(handle, error: error) { emit(event) }
+        case let .fileTransferFinished(handle, error):
+            if let event = transfers.fileFinished(handle, error: error) { emit(event) }
         case .file:
             break // handled synchronously in handle(_:)
         }

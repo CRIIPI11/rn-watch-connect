@@ -2,8 +2,8 @@
 //  WatchTransfers.swift
 //  RnWatchConnect
 //
-//  Owns User Info and File Transfers: starting, listing, cancelling, and their snapshots.
-//  Foundation only: see docs/adr/0001.
+//  Owns User Info and File Transfers: starting, listing, cancelling, their snapshots,
+//  their Transfer ids, and how each one finishes. Foundation only: see docs/adr/0001.
 //
 
 import Foundation
@@ -51,8 +51,28 @@ struct FileTransferSnapshot: Equatable {
     }
 }
 
+/// Starts, lists and cancels Transfers, and decides their finish events.
+///
+/// Rule: every Transfer gets exactly one finish event. Cancelling produces it immediately;
+/// a later `didFinish` for a cancelled Transfer is ignored.
+///
+/// Transfer ids are UUIDs, valid for the current app run. A registry entry holds a strong
+/// reference to its transfer object, so an object's address cannot be reused while its id is live.
+/// An entry is removed when its `didFinish` arrives. A cancelled entry is kept until then too,
+/// even after WatchConnectivity stops listing it, so a late `didFinish` cannot produce a second event.
+///
+/// Not thread-safe: the Controller calls it only on its serial queue.
 final class WatchTransfers {
+    private struct Entry<Handle> {
+        let id: String
+        let handle: Handle
+        /// The finish event was already produced (by a cancel); ignore a later `didFinish`.
+        var finishReported = false
+    }
+
     private let port: WatchSessionPort
+    private var userInfoEntries: [ObjectIdentifier: Entry<UserInfoTransferHandle>] = [:]
+    private var fileEntries: [ObjectIdentifier: Entry<FileTransferHandle>] = [:]
 
     init(port: WatchSessionPort) {
         self.port = port
@@ -64,16 +84,41 @@ final class WatchTransfers {
         snapshot(of: port.transferUserInfo(userInfo))
     }
 
+    /// Transfers not finished yet. Cancelled Transfers are left out, because their finish
+    /// event was already produced, even while WatchConnectivity still lists them.
     var outstandingUserInfo: [UserInfoTransferSnapshot] {
         guard port.isSupported else { return [] }
-        return port.outstandingUserInfoTransfers.map(snapshot(of:))
+        return port.outstandingUserInfoTransfers
+            .filter { userInfoEntries[ObjectIdentifier($0)]?.finishReported != true }
+            .map(snapshot(of:))
     }
 
-    func cancelUserInfo(id: String) throws {
-        guard let transfer = port.outstandingUserInfoTransfers.first(where: { transferId(of: $0) == id }) else {
+    /// Cancels the Transfer and returns its finish event.
+    /// - Throws: `invalidTransferId` when no outstanding Transfer has this id (including one
+    ///   that already finished or was already cancelled).
+    func cancelUserInfo(id: String) throws -> SessionEvent {
+        guard let handle = port.outstandingUserInfoTransfers.first(where: {
+            userInfoEntries[ObjectIdentifier($0)].map { $0.id == id && !$0.finishReported } ?? false
+        }) else {
             throw UserInfoTransferError.invalidTransferId
         }
-        transfer.cancel()
+        handle.cancel()
+        let snapshot = snapshot(of: handle)
+        userInfoEntries[ObjectIdentifier(handle)]?.finishReported = true
+        return .userInfoTransferFinished(snapshot, error: TransferError.cancelled)
+    }
+
+    /// WatchConnectivity reported the Transfer finished. Returns its finish event, or nil
+    /// when it was already produced by a cancel.
+    func userInfoFinished(_ handle: UserInfoTransferHandle, error: Error?) -> SessionEvent? {
+        let key = ObjectIdentifier(handle)
+        if userInfoEntries[key]?.finishReported == true {
+            userInfoEntries[key] = nil
+            return nil
+        }
+        let snapshot = snapshot(of: handle)
+        userInfoEntries[key] = nil
+        return .userInfoTransferFinished(snapshot, error: error)
     }
 
     // MARK: - Files
@@ -89,23 +134,67 @@ final class WatchTransfers {
         return snapshot(of: port.transferFile(fileURL, metadata: metadata))
     }
 
+    /// Transfers not finished yet. Cancelled Transfers are left out, because their finish
+    /// event was already produced, even while WatchConnectivity still lists them.
     var outstandingFiles: [FileTransferSnapshot] {
         guard port.isSupported else { return [] }
-        return port.outstandingFileTransfers.map(snapshot(of:))
+        return port.outstandingFileTransfers
+            .filter { fileEntries[ObjectIdentifier($0)]?.finishReported != true }
+            .map(snapshot(of:))
     }
 
-    func cancelFile(id: String) throws {
-        guard let transfer = port.outstandingFileTransfers.first(where: { transferId(of: $0) == id }) else {
+    /// Cancels the Transfer and returns its finish event.
+    /// - Throws: `invalidTransferId` when no outstanding Transfer has this id (including one
+    ///   that already finished or was already cancelled).
+    func cancelFile(id: String) throws -> SessionEvent {
+        guard let handle = port.outstandingFileTransfers.first(where: {
+            fileEntries[ObjectIdentifier($0)].map { $0.id == id && !$0.finishReported } ?? false
+        }) else {
             throw FileTransferError.invalidTransferId
         }
-        transfer.cancel()
+        handle.cancel()
+        let snapshot = snapshot(of: handle)
+        fileEntries[ObjectIdentifier(handle)]?.finishReported = true
+        return .fileTransferFinished(snapshot, error: TransferError.cancelled)
+    }
+
+    /// WatchConnectivity reported the Transfer finished. Returns its finish event, or nil
+    /// when it was already produced by a cancel.
+    func fileFinished(_ handle: FileTransferHandle, error: Error?) -> SessionEvent? {
+        let key = ObjectIdentifier(handle)
+        if fileEntries[key]?.finishReported == true {
+            fileEntries[key] = nil
+            return nil
+        }
+        let snapshot = snapshot(of: handle)
+        fileEntries[key] = nil
+        return .fileTransferFinished(snapshot, error: error)
+    }
+
+    // MARK: - Registry
+
+    /// The Transfer's id, assigned the first time the Transfer is seen.
+    private func id(of handle: UserInfoTransferHandle) -> String {
+        let key = ObjectIdentifier(handle)
+        if let entry = userInfoEntries[key] { return entry.id }
+        let entry = Entry(id: UUID().uuidString, handle: handle)
+        userInfoEntries[key] = entry
+        return entry.id
+    }
+
+    private func id(of handle: FileTransferHandle) -> String {
+        let key = ObjectIdentifier(handle)
+        if let entry = fileEntries[key] { return entry.id }
+        let entry = Entry(id: UUID().uuidString, handle: handle)
+        fileEntries[key] = entry
+        return entry.id
     }
 
     // MARK: - Snapshots
 
     private func snapshot(of transfer: UserInfoTransferHandle) -> UserInfoTransferSnapshot {
         UserInfoTransferSnapshot(
-            id: transferId(of: transfer),
+            id: id(of: transfer),
             isTransferring: transfer.isTransferring,
             userInfo: transfer.userInfo
         )
@@ -113,15 +202,11 @@ final class WatchTransfers {
 
     private func snapshot(of transfer: FileTransferHandle) -> FileTransferSnapshot {
         FileTransferSnapshot(
-            id: transferId(of: transfer),
+            id: id(of: transfer),
             isTransferring: transfer.isTransferring,
             progress: TransferProgress(transfer.progress),
             fileURL: transfer.fileURL,
             metadata: transfer.metadata ?? [:]
         )
-    }
-
-    private func transferId(of transfer: AnyObject) -> String {
-        String(ObjectIdentifier(transfer).hashValue)
     }
 }

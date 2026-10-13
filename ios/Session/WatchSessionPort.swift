@@ -30,6 +30,8 @@ enum WatchSessionPortEvent {
     case userInfo([String: Any])
     /// The file at `fileURL` is only valid until the event handler returns.
     case file(fileURL: URL, metadata: [String: Any]?)
+    case userInfoTransferFinished(UserInfoTransferHandle, error: Error?)
+    case fileTransferFinished(FileTransferHandle, error: Error?)
 }
 
 /// An outstanding User Info transfer. WCSessionUserInfoTransfer in production.
