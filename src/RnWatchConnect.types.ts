@@ -8,10 +8,8 @@ export type OutstandingUserInfoTransfer = {
   isTransferring: boolean;
 };
 
-export type UserInfoTransfer = {
-  id: string;
-  isTransferring: boolean;
-};
+/** @deprecated Use `OutstandingUserInfoTransfer`. `transferUserInfo` returns the same shape as `outstandingUserInfoTransfers`. */
+export type UserInfoTransfer = OutstandingUserInfoTransfer;
 
 export type File = {
   fileURL: string;
@@ -128,17 +126,17 @@ export interface RnWatchConnectInterface
   /**
    * Transfers user info to the Watch.
    * @param userInfo - The user info to transfer
-   * @returns A promise that resolves with the transfer ID and isTransferring status: { id: string, isTransferring: boolean }
+   * @returns The transfer, in the same shape as `outstandingUserInfoTransfers`
    */
   transferUserInfo<T extends Record<string, any>>(
     userInfo: T
-  ): UserInfoTransfer;
+  ): OutstandingUserInfoTransfer;
 
   /**
    * Transfers a file to the Watch.
    * @param file - The file to transfer
    * @param metadata - The metadata to transfer
-   * @returns A promise that resolves with the transfer ID and isTransferring status: { id: string, isTransferring: boolean }
+   * @returns The transfer, in the same shape as `outstandingFileTransfers`
    */
   transferFile(file: string, metadata?: Record<string, any>): FileTransfer;
 

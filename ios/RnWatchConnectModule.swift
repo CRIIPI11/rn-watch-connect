@@ -37,11 +37,11 @@ public class RnWatchConnectModule: Module {
         }
         
         Property("outstandingUserInfoTransfers") {
-            controller.outstandingUserInfoTransfers
+            controller.outstandingUserInfoTransfers.map(Self.jsValue)
         }
 
         Property("outstandingFileTransfers") {
-            controller.outstandingFileTransfers
+            controller.outstandingFileTransfers.map(Self.jsValue)
         }
         
         // Functions
@@ -99,19 +99,21 @@ public class RnWatchConnectModule: Module {
         }
 
         Function("transferUserInfo") { (userInfo: [String: Any]) -> [String: Any] in
-            self.controller.transferUserInfo(userInfo)
+            Self.jsValue(self.controller.transferUserInfo(userInfo))
         }
 
         Function("cancelUserInfoTransfer") { (transferId: String) -> [String: Any] in
             try self.controller.cancelUserInfoTransfer(id: transferId)
+            return ["id": transferId]
         }
 
         Function("transferFile") { (file: String, metadata: [String: Any]?) -> [String: Any] in
-            try self.controller.transferFile(file, metadata: metadata)
+            Self.jsValue(try self.controller.transferFile(file, metadata: metadata))
         }
         
         Function("cancelFileTransfer") { (transferId: String) -> [String: Any] in
             try self.controller.cancelFileTransfer(id: transferId)
+            return ["id": transferId]
         }
 
         // Events
@@ -164,5 +166,31 @@ public class RnWatchConnectModule: Module {
         case let .fileReceived(fileURL, metadata):
             sendEvent("onFileReceived", ["fileURL": fileURL.absoluteString, "metadata": metadata])
         }
+    }
+    
+    // MARK: - JS shapes (OutstandingUserInfoTransfer, FileTransfer in RnWatchConnect.types.ts)
+    
+    private static func jsValue(_ transfer: UserInfoTransferSnapshot) -> [String: Any] {
+        [
+            "id": transfer.id,
+            "isTransferring": transfer.isTransferring,
+            "userInfo": transfer.userInfo,
+        ]
+    }
+    
+    private static func jsValue(_ transfer: FileTransferSnapshot) -> [String: Any] {
+        [
+            "id": transfer.id,
+            "isTransferring": transfer.isTransferring,
+            "progress": [
+                "fractionCompleted": transfer.progress.fractionCompleted,
+                "completedUnitCount": transfer.progress.completedUnitCount,
+                "totalUnitCount": transfer.progress.totalUnitCount,
+            ],
+            "file": [
+                "fileURL": transfer.fileURL.absoluteString,
+                "metadata": transfer.metadata,
+            ],
+        ]
     }
 }

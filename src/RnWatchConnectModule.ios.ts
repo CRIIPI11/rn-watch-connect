@@ -4,7 +4,6 @@ import type {
   RnWatchConnectModuleEvents,
   RnWatchConnectInterface,
   OutstandingUserInfoTransfer,
-  UserInfoTransfer,
   FileTransfer,
 } from "./RnWatchConnect.types";
 
@@ -36,7 +35,9 @@ declare class RnWatchConnectModule
   updateApplicationContext<T = Record<string, any>>(
     applicationContext: T
   ): Promise<void>;
-  transferUserInfo<T = Record<string, any>>(userInfo: T): UserInfoTransfer;
+  transferUserInfo<T = Record<string, any>>(
+    userInfo: T
+  ): OutstandingUserInfoTransfer;
   cancelUserInfoTransfer(transferId: string): {
     id: string;
   };

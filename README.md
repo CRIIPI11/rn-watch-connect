@@ -232,7 +232,7 @@ await RnWatchConnect.updateApplicationContext({
 });
 ```
 
-#### `transferUserInfo<T>(userInfo: T): UserInfoTransfer`
+#### `transferUserInfo<T>(userInfo: T): OutstandingUserInfoTransfer`
 
 Transfers user info to the Watch.
 
@@ -242,7 +242,7 @@ Transfers user info to the Watch.
 
 **Returns:**
 
-- [`UserInfoTransfer`](#userinfotransfer): The transfer ID and isTransferring status
+- [`OutstandingUserInfoTransfer`](#outstandinguserinfotransfer): The transfer, in the same shape as `outstandingUserInfoTransfers`
 
 **Example:**
 
@@ -283,7 +283,7 @@ Transfers a file to the Watch.
 
 **Returns:**
 
-- [`FileTransfer`](#filetransfer): Object containing the transfer information
+- [`FileTransfer`](#filetransfer): The transfer, in the same shape as `outstandingFileTransfers`
 
 **Throws:** If the file URL is invalid or the file is not found
 
@@ -478,10 +478,7 @@ useEventListener(
 
 ### `UserInfoTransfer`
 
-| Property       | Type    | Description                                   |
-| -------------- | ------- | --------------------------------------------- |
-| id             | string  | Unique identifier for the transfer            |
-| isTransferring | boolean | Whether the transfer is currently in progress |
+_Deprecated._ An alias of [`OutstandingUserInfoTransfer`](#outstandinguserinfotransfer), kept so existing code still compiles. Use `OutstandingUserInfoTransfer` instead.
 
 ### `FileTransfer`
 
