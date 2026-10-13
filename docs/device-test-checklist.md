@@ -54,9 +54,16 @@ Run these first; if any fail, stop and fix before the edge cases.
 
 ## 5. Transfers
 
-- [ ] **Progress.** Transfer a large file (the example app's "large file" button); progress fields update and match the `FileTransfer` type (`fractionCompleted`, `completedUnitCount`, `totalUnitCount`). Compare the object returned by `transferFile` with the one in `outstandingFileTransfers` — they must have the same shape. _(Known mismatch at time of writing.)_
-- [ ] **Cancel.** Start two file transfers, cancel the first by ID; only the first disappears from `outstandingFileTransfers` and the second completes.
-- [ ] **Cancel finished transfer.** Cancel an ID whose transfer already completed; it throws `Invalid transfer ID` rather than cancelling something else.
+Use the example app's **File transfers** section (the Transfer playground). Each transfer must produce **exactly one** finish event in Activity (`onFileTransferFinished` / `onUserInfoTransferFinished`).
+
+- [ ] **Same shape.** Start a "5 MB file": the object returned by `transferFile` has the same keys as its entry in `outstandingFileTransfers` (`progress.fractionCompleted`, `completedUnitCount`, `totalUnitCount`), and progress updates while it sends.
+- [ ] **Delivered.** "Small file" and "Transfer user info": each logs one "… delivered" entry with `error: null`. The short id in the "… delivered" entry matches the one in the entry that started it. This confirms WatchConnectivity hands back the same transfer object in `didFinish`; if the ids differ, the finish events can't be matched to their transfers.
+- [ ] **Cancelled.** Start "Huge file · 50 MB" and press **Cancel** while it sends: one "File transfer ended: … Transfer cancelled" entry appears **immediately**, the row shows "Cancelled", and no second entry follows (wait about 30 s).
+- [ ] **Cancel one of two.** Start two huge files and cancel the first: only the first ends as cancelled, and the second is delivered.
+- [ ] **Late cancel.** After a transfer is delivered, press **Cancel finished**: it throws `Invalid transfer ID`, nothing else is cancelled, and no new finish event appears.
+- [ ] **Failed at start.** Press **Missing file**: it throws `File not found` right away, and **no** finish event follows.
+- [ ] **Failed while sending: delete source.** Start "Huge file", then press **Delete source**. Record what happens: a failed finish event (record its message), delivery anyway, or something else.
+- [ ] **Failed while sending: manual triggers.** Start "Huge file", then uninstall the watch app (or unpair the watch). Record which trigger produces a failed finish event, and its message. Update the playground footer and README if the results differ from what they say.
 - [ ] **Kill mid-transfer.** Start a large file transfer, force-quit the app, relaunch. Record whether it still appears in `outstandingFileTransfers`, whether it has an ID, and whether that ID can be cancelled.
 - [ ] **Same as above for user info:** queue several `transferUserInfo` calls while the watch is unreachable, kill and relaunch, inspect `outstandingUserInfoTransfers`, cancel one.
 - [ ] **Received file name collision.** Have the watch send two different files with the same file name back to back; confirm JS can read both with the right contents. _(At time of writing both are copied to_ `tmp/<name>`_, so the second overwrites the first.)_
