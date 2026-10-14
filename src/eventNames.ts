@@ -1,6 +1,6 @@
-import type { RnWatchConnectModuleEvents } from "./RnWatchConnect.types";
+import type { NativeModuleEvents } from "./RnWatchConnectNative.types";
 
-type EventName = keyof RnWatchConnectModuleEvents;
+type EventName = keyof NativeModuleEvents;
 
 /**
  * Every event the native module sends, as a runtime list. Mirrors `JSEvents.names` in
@@ -23,7 +23,7 @@ export const EVENT_NAMES = [
   "onFileTransferFinished",
 ] as const satisfies readonly EventName[];
 
-// Compile-time check: every event in RnWatchConnectModuleEvents is listed above.
+// Compile-time check: every event in NativeModuleEvents is listed above.
 type MissingEventNames = Exclude<EventName, (typeof EVENT_NAMES)[number]>;
 const allEventsListed: [MissingEventNames] extends [never] ? true : MissingEventNames = true;
 void allEventsListed;

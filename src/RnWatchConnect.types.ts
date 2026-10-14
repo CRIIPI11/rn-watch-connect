@@ -57,6 +57,37 @@ export type FileTransferFinishedEvent = FileTransfer & {
   error: TransferFinishError | null;
 };
 
+/** An Inbound Message that asks for a Reply. */
+export type MessageWithReplyEvent = {
+  message: MessagePayload;
+  /**
+   * The Reply function: sends `reply` back to the Watch.
+   * Rejects if this Message was already replied to, or is no longer waiting for a Reply.
+   */
+  reply: (reply: MessagePayload) => Promise<void>;
+  /**
+   * @deprecated Call `reply` instead. `replyId` and `replyToMessage` will be removed in a future
+   * major version.
+   */
+  replyId: string;
+};
+
+/** An Inbound Data Message that asks for a Reply. */
+export type DataMessageWithReplyEvent = {
+  /** The received bytes, base64 encoded. */
+  data: string;
+  /**
+   * The Reply function: sends `reply` (base64 encoded) back to the Watch.
+   * Rejects if this Data Message was already replied to, or is no longer waiting for a Reply.
+   */
+  reply: (reply: string) => Promise<void>;
+  /**
+   * @deprecated Call `reply` instead. `replyId` and `replyToDataMessage` will be removed in a
+   * future major version.
+   */
+  replyId: string;
+};
+
 export type RnWatchConnectModuleEvents = {
   /** Triggered when the Watch's reachability status changes */
   onReachabilityChanged: (params: { isWatchReachable: boolean }) => void;
@@ -67,11 +98,11 @@ export type RnWatchConnectModuleEvents = {
   /** Triggered when a message is received from the Watch */
   onMessageReceived: (message: MessagePayload) => void;
   /** Triggered when a message requiring a reply is received from the Watch */
-  onMessageWithReply: (params: { message: MessagePayload; replyId: string }) => void;
+  onMessageWithReply: (event: MessageWithReplyEvent) => void;
   /** Triggered when a data message is received from the Watch */
   onDataMessageReceived: (messageData: { data: string }) => void;
   /** Triggered when a data message requiring a reply is received from the Watch */
-  onDataMessageWithReply: (params: { data: string; replyId: string }) => void;
+  onDataMessageWithReply: (event: DataMessageWithReplyEvent) => void;
   /** Triggered when the application context changes */
   onApplicationContextChanged: (params: Record<string, any>) => void;
   /** Triggered when user info is received from the Watch */
@@ -117,6 +148,13 @@ export interface RnWatchConnectInterface
    * Sends a reply to a message received from the Watch.
    * @param replyId - The ID of the message to reply to
    * @param reply - The message to send as a reply
+   * @deprecated Use the `reply` function from the event instead. Will be removed in a future
+   * major version.
+   * ```ts
+   * useEventListener(RnWatchConnect, "onMessageWithReply", ({ message, reply }) => {
+   *   reply({ ok: true });
+   * });
+   * ```
    */
   replyToMessage(replyId: string, reply: MessagePayload): Promise<void>;
 
@@ -146,6 +184,13 @@ export interface RnWatchConnectInterface
    * Sends a reply to a data message received from the Watch.
    * @param replyId - The ID of the message to reply to
    * @param response - The base64 encoded string to send as a reply
+   * @deprecated Use the `reply` function from the event instead. Will be removed in a future
+   * major version.
+   * ```ts
+   * useEventListener(RnWatchConnect, "onDataMessageWithReply", ({ data, reply }) => {
+   *   reply("SGVsbG8gZnJvbSBpUGhvbmUh");
+   * });
+   * ```
    */
   replyToDataMessage(replyId: string, response: string): Promise<void>;
 
