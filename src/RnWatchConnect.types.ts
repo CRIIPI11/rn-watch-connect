@@ -8,10 +8,8 @@ export type OutstandingUserInfoTransfer = {
   isTransferring: boolean;
 };
 
-export type UserInfoTransfer = {
-  id: string;
-  isTransferring: boolean;
-};
+/** @deprecated Use `OutstandingUserInfoTransfer`. `transferUserInfo` returns the same shape as `outstandingUserInfoTransfers`. */
+export type UserInfoTransfer = OutstandingUserInfoTransfer;
 
 export type File = {
   fileURL: string;
@@ -29,6 +27,21 @@ export type FileTransfer = {
   isTransferring: boolean;
   progress: FileProgress;
   file: File;
+};
+
+/** Why a Transfer finished without being delivered. `null` in a finish event means it was delivered. */
+export type TransferFinishError = {
+  message: string;
+};
+
+/** Sent exactly once per User Info Transfer, when it was delivered, failed or was cancelled. */
+export type UserInfoTransferFinishedEvent = OutstandingUserInfoTransfer & {
+  error: TransferFinishError | null;
+};
+
+/** Sent exactly once per File Transfer, when it was delivered, failed or was cancelled. */
+export type FileTransferFinishedEvent = FileTransfer & {
+  error: TransferFinishError | null;
 };
 
 export type RnWatchConnectModuleEvents = {
@@ -52,6 +65,10 @@ export type RnWatchConnectModuleEvents = {
   onUserInfoReceived: (params: any) => void;
   /** Triggered when a file is received from the Watch */
   onFileReceived: (params: File) => void;
+  /** Triggered exactly once per User Info Transfer: delivered (`error: null`), failed, or cancelled */
+  onUserInfoTransferFinished: (event: UserInfoTransferFinishedEvent) => void;
+  /** Triggered exactly once per File Transfer: delivered (`error: null`), failed, or cancelled */
+  onFileTransferFinished: (event: FileTransferFinishedEvent) => void;
 };
 
 // Define the strict interface for the module
@@ -128,17 +145,17 @@ export interface RnWatchConnectInterface
   /**
    * Transfers user info to the Watch.
    * @param userInfo - The user info to transfer
-   * @returns A promise that resolves with the transfer ID and isTransferring status: { id: string, isTransferring: boolean }
+   * @returns The transfer, in the same shape as `outstandingUserInfoTransfers`
    */
   transferUserInfo<T extends Record<string, any>>(
     userInfo: T
-  ): UserInfoTransfer;
+  ): OutstandingUserInfoTransfer;
 
   /**
    * Transfers a file to the Watch.
    * @param file - The file to transfer
    * @param metadata - The metadata to transfer
-   * @returns A promise that resolves with the transfer ID and isTransferring status: { id: string, isTransferring: boolean }
+   * @returns The transfer, in the same shape as `outstandingFileTransfers`
    */
   transferFile(file: string, metadata?: Record<string, any>): FileTransfer;
 

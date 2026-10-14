@@ -13,6 +13,7 @@ final class WatchSessionController {
     private let queueKey = DispatchSpecificKey<Void>()
     private let stagingDirectory: URL
     private let fileManager = FileManager.default
+    private let transfers: WatchTransfers
 
     /// Receives every SessionEvent, on `queue`. Nothing is replayed to a handler set later.
     var onEvent: ((SessionEvent) -> Void)?
@@ -32,6 +33,7 @@ final class WatchSessionController {
         self.port = port
         self.queue = queue
         self.stagingDirectory = stagingDirectory
+        self.transfers = WatchTransfers(port: port)
         queue.setSpecific(key: queueKey, value: ())
         port.onEvent = { [weak self] event in
             self?.handle(event)
@@ -103,90 +105,33 @@ final class WatchSessionController {
 
     // MARK: - Transfers
 
-    func transferUserInfo(_ userInfo: [String: Any]) -> [String: Any] {
-        let transfer = port.transferUserInfo(userInfo)
-        return [
-            "id": transferId(of: transfer),
-            "isTransferring": transfer.isTransferring,
-        ]
+    // Every call runs on `queue`, where WatchTransfers keeps its Transfer registry.
+
+    func transferUserInfo(_ userInfo: [String: Any]) -> UserInfoTransferSnapshot {
+        onQueue { transfers.startUserInfo(userInfo) }
     }
 
-    var outstandingUserInfoTransfers: [[String: Any]] {
-        guard isSupported else { return [] }
-        return port.outstandingUserInfoTransfers.map { transfer in
-            [
-                "id": transferId(of: transfer),
-                "userInfo": transfer.userInfo,
-                "isTransferring": transfer.isTransferring,
-            ]
-        }
+    var outstandingUserInfoTransfers: [UserInfoTransferSnapshot] {
+        onQueue { transfers.outstandingUserInfo }
     }
 
-    func cancelUserInfoTransfer(id: String) throws -> [String: Any] {
-        guard let transfer = port.outstandingUserInfoTransfers.first(where: { transferId(of: $0) == id }) else {
-            throw UserInfoTransferError.invalidTransferId
-        }
-        transfer.cancel()
-        return ["id": id]
+    /// Cancels the Transfer and emits its finish event right away.
+    func cancelUserInfoTransfer(id: String) throws {
+        try onQueue { emit(try transfers.cancelUserInfo(id: id)) }
     }
 
     /// - Parameter file: a file URL string; the file must exist.
-    func transferFile(_ file: String, metadata: [String: Any]?) throws -> [String: Any] {
-        guard let fileURL = URL(string: file) else {
-            throw FileTransferError.invalidFileURL
-        }
-        guard FileManager.default.fileExists(atPath: fileURL.relativePath) else {
-            throw FileTransferError.fileNotFound
-        }
-
-        let transfer = port.transferFile(fileURL, metadata: metadata)
-
-        // Moved as-is: these progress keys differ from outstandingFileTransfers'.
-        // Unifying the snapshot shape is the Transfers follow-up (architecture candidate #2).
-        return [
-            "id": transferId(of: transfer),
-            "isTransferring": transfer.isTransferring,
-            "progress": [
-                "total": transfer.progress.totalUnitCount,
-                "completed": transfer.progress.completedUnitCount,
-                "fractionCompleted": transfer.progress.fractionCompleted,
-            ],
-            "file": [
-                "fileURL": transfer.fileURL.absoluteString,
-                "metadata": transfer.metadata ?? [:],
-            ],
-        ]
+    func transferFile(_ file: String, metadata: [String: Any]?) throws -> FileTransferSnapshot {
+        try onQueue { try transfers.startFile(file, metadata: metadata) }
     }
 
-    var outstandingFileTransfers: [[String: Any]] {
-        guard isSupported else { return [] }
-        return port.outstandingFileTransfers.map { transfer in
-            [
-                "id": transferId(of: transfer),
-                "isTransferring": transfer.isTransferring,
-                "progress": [
-                    "fractionCompleted": transfer.progress.fractionCompleted,
-                    "completedUnitCount": transfer.progress.completedUnitCount,
-                    "totalUnitCount": transfer.progress.totalUnitCount,
-                ],
-                "file": [
-                    "fileURL": transfer.fileURL.absoluteString,
-                    "metadata": transfer.metadata ?? [:],
-                ],
-            ]
-        }
+    var outstandingFileTransfers: [FileTransferSnapshot] {
+        onQueue { transfers.outstandingFiles }
     }
 
-    func cancelFileTransfer(id: String) throws -> [String: Any] {
-        guard let transfer = port.outstandingFileTransfers.first(where: { transferId(of: $0) == id }) else {
-            throw FileTransferError.invalidTransferId
-        }
-        transfer.cancel()
-        return ["id": id]
-    }
-
-    private func transferId(of transfer: AnyObject) -> String {
-        String(ObjectIdentifier(transfer).hashValue)
+    /// Cancels the Transfer and emits its finish event right away.
+    func cancelFileTransfer(id: String) throws {
+        try onQueue { emit(try transfers.cancelFile(id: id)) }
     }
 
     // MARK: - Replies
@@ -269,6 +214,10 @@ final class WatchSessionController {
             emit(.applicationContext(applicationContext))
         case let .userInfo(userInfo):
             emit(.userInfo(userInfo))
+        case let .userInfoTransferFinished(handle, error):
+            if let event = transfers.userInfoFinished(handle, error: error) { emit(event) }
+        case let .fileTransferFinished(handle, error):
+            if let event = transfers.fileFinished(handle, error: error) { emit(event) }
         case .file:
             break // handled synchronously in handle(_:)
         }

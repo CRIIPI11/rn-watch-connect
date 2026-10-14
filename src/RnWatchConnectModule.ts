@@ -1,7 +1,6 @@
 import type {
   RnWatchConnectInterface,
   OutstandingUserInfoTransfer,
-  UserInfoTransfer,
   FileTransfer,
 } from "./RnWatchConnect.types";
 
@@ -44,7 +43,7 @@ const module = {
   updateApplicationContext(): Promise<never> {
     return Promise.reject(new Error(UNSUPPORTED_MESSAGE));
   },
-  transferUserInfo(): UserInfoTransfer {
+  transferUserInfo(): OutstandingUserInfoTransfer {
     throw new Error(UNSUPPORTED_MESSAGE);
   },
   cancelUserInfoTransfer(): { id: string } {

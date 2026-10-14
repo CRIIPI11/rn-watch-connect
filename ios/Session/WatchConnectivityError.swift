@@ -87,3 +87,15 @@ enum FileTransferError: LocalizedError {
         }
     }
 }
+
+/// Why a Transfer finished without being delivered, when WatchConnectivity did not say.
+enum TransferError: LocalizedError {
+    case cancelled
+
+    var errorDescription: String? {
+        switch self {
+        case .cancelled:
+            return "Transfer cancelled"
+        }
+    }
+}

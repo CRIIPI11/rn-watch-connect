@@ -232,7 +232,7 @@ await RnWatchConnect.updateApplicationContext({
 });
 ```
 
-#### `transferUserInfo<T>(userInfo: T): UserInfoTransfer`
+#### `transferUserInfo<T>(userInfo: T): OutstandingUserInfoTransfer`
 
 Transfers user info to the Watch.
 
@@ -242,7 +242,7 @@ Transfers user info to the Watch.
 
 **Returns:**
 
-- [`UserInfoTransfer`](#userinfotransfer): The transfer ID and isTransferring status
+- [`OutstandingUserInfoTransfer`](#outstandinguserinfotransfer): The transfer, in the same shape as `outstandingUserInfoTransfers`
 
 **Example:**
 
@@ -283,7 +283,7 @@ Transfers a file to the Watch.
 
 **Returns:**
 
-- [`FileTransfer`](#filetransfer): Object containing the transfer information
+- [`FileTransfer`](#filetransfer): The transfer, in the same shape as `outstandingFileTransfers`
 
 **Throws:** If the file URL is invalid or the file is not found
 
@@ -403,6 +403,40 @@ useEventListener(RnWatchConnect, "onFileReceived", (event) => {
 });
 ```
 
+#### `onUserInfoTransferFinished` / `onFileTransferFinished`
+
+Triggered when a Transfer finishes. **Each Transfer gets exactly one of these events**, however it ends:
+
+| How it ended | `error` |
+| --- | --- |
+| Delivered to the Watch | `null` |
+| Failed | `{ message }` from WatchConnectivity |
+| Cancelled with `cancelUserInfoTransfer` / `cancelFileTransfer` | `{ message: "Transfer cancelled" }`, sent immediately when you cancel |
+
+The event object is the Transfer snapshot ([`OutstandingUserInfoTransfer`](#outstandinguserinfotransfer) or [`FileTransfer`](#filetransfer)) plus `error`.
+
+If you cancel a Transfer that was already delivered, the cancel throws `Invalid transfer ID`, and this event reports the delivery with `error: null`.
+
+WatchConnectivity has no progress event. To show progress, read `outstandingFileTransfers` periodically, and use this event to know when a Transfer is done.
+
+Good to know:
+
+- **Deleting your file after starting a File Transfer doesn't stop or fail it.** WatchConnectivity keeps its own copy, so you can delete the source right after calling `transferFile`.
+- **If the Watch app is uninstalled during a Transfer, the Transfer stays outstanding** and no finish event is sent, even after the Watch app is reinstalled: WatchConnectivity does not deliver it to the new installation. Cancel it to end it. To handle this automatically, listen for `onWatchAppInstallChanged` and cancel (or flag) your outstanding Transfers when `isWatchAppInstalled` becomes `false`.
+- **After your app relaunches**, Transfers that are still outstanding have **new ids**. Read `outstandingFileTransfers` / `outstandingUserInfoTransfers` at launch to pick them up. Their finish events, and `cancel…Transfer`, use the new ids.
+
+**Example:**
+
+```typescript
+useEventListener(RnWatchConnect, "onFileTransferFinished", (transfer) => {
+  if (transfer.error) {
+    console.log("Transfer failed:", transfer.id, transfer.error.message);
+  } else {
+    console.log("Transfer delivered:", transfer.file.fileURL);
+  }
+});
+```
+
 #### `onReachabilityChanged`
 
 Triggered when the Watch's reachability status changes.
@@ -468,6 +502,8 @@ useEventListener(
 
 ## Types
 
+> **Transfer ids** (`id` on the types below) are valid only for the current app run. After the app restarts, a Transfer that is still outstanding gets a new id.
+
 ### `OutstandingUserInfoTransfer`
 
 | Property       | Type                | Description                                   |
@@ -478,10 +514,7 @@ useEventListener(
 
 ### `UserInfoTransfer`
 
-| Property       | Type    | Description                                   |
-| -------------- | ------- | --------------------------------------------- |
-| id             | string  | Unique identifier for the transfer            |
-| isTransferring | boolean | Whether the transfer is currently in progress |
+_Deprecated._ An alias of [`OutstandingUserInfoTransfer`](#outstandinguserinfotransfer), kept so existing code still compiles. Use `OutstandingUserInfoTransfer` instead.
 
 ### `FileTransfer`
 

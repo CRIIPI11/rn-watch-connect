@@ -134,6 +134,14 @@ extension WCWatchSessionAdapter: WCSessionDelegate {
     func session(_ session: WCSession, didReceive file: WCSessionFile) {
         onEvent?(.file(fileURL: file.fileURL, metadata: file.metadata))
     }
+
+    func session(_ session: WCSession, didFinish userInfoTransfer: WCSessionUserInfoTransfer, error: Error?) {
+        onEvent?(.userInfoTransferFinished(userInfoTransfer, error: error))
+    }
+
+    func session(_ session: WCSession, didFinish fileTransfer: WCSessionFileTransfer, error: Error?) {
+        onEvent?(.fileTransferFinished(fileTransfer, error: error))
+    }
 }
 
 // MARK: - Transfer handles
