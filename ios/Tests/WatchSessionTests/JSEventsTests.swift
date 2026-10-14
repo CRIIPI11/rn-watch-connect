@@ -68,10 +68,11 @@ final class JSEventsTests: XCTestCase {
         assertEvent(
             .fileReceiveFailed(fileName: "a.txt", metadata: ["k": 1], error: error),
             name: "onFileReceiveFailed",
-            keys: ["message", "fileName", "metadata"]
+            keys: ["message", "code", "fileName", "metadata"]
         )
         let body = JSEvents.event(for: .fileReceiveFailed(fileName: "a.txt", metadata: nil, error: error)).body
         XCTAssertEqual(body["message"] as? String, error.localizedDescription)
+        XCTAssertEqual(body["code"] as? String, "ERR_INSUFFICIENT_SPACE")
         XCTAssertEqual(body["fileName"] as? String, "a.txt")
         XCTAssertTrue(body["metadata"] is NSNull, "missing metadata is null")
     }
@@ -105,7 +106,10 @@ final class JSEventsTests: XCTestCase {
         XCTAssertTrue(delivered["error"] is NSNull)
 
         let cancelled = JSEvents.event(for: .fileTransferFinished(fileTransfer, error: TransferError.cancelled)).body
-        XCTAssertEqual((cancelled["error"] as? [String: Any])?["message"] as? String, "Transfer cancelled")
+        let cancelledError = cancelled["error"] as? [String: Any]
+        XCTAssertEqual(cancelledError?["message"] as? String, "Transfer cancelled")
+        XCTAssertEqual(cancelledError?["code"] as? String, "ERR_TRANSFER_CANCELLED")
+        XCTAssertEqual(Set(cancelledError?.keys ?? [:].keys), ["message", "code"])
     }
 
     // MARK: - Names

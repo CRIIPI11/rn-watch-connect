@@ -59,6 +59,7 @@ enum JSEvents {
         case let .fileReceiveFailed(fileName, metadata, error):
             return JSEvent(name: "onFileReceiveFailed", body: [
                 "message": error.localizedDescription,
+                "code": ErrorCodes.receivedFileCode(for: error),
                 "fileName": fileName,
                 "metadata": metadata ?? NSNull(),
             ])
@@ -95,8 +96,8 @@ enum JSEvents {
         ]
     }
 
-    /// `error` in a finish event: `{ message }`, or `null` when the Transfer was delivered.
+    /// `error` in a finish event: `{ message, code }`, or `null` when the Transfer was delivered.
     private static func errorValue(_ error: Error?) -> [String: Any] {
-        ["error": error.map { ["message": $0.localizedDescription] } ?? NSNull()]
+        ["error": error.map { ["message": $0.localizedDescription, "code": ErrorCodes.code(for: $0)] } ?? NSNull()]
     }
 }
