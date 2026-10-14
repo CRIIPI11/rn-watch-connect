@@ -1,8 +1,5 @@
-import type {
-  RnWatchConnectInterface,
-  OutstandingUserInfoTransfer,
-  FileTransfer,
-} from "./RnWatchConnect.types";
+import type { OutstandingUserInfoTransfer, FileTransfer } from "./RnWatchConnect.types";
+import type { NativeRnWatchConnect } from "./RnWatchConnectNative.types";
 
 const UNSUPPORTED_MESSAGE =
   "RnWatchConnect is only supported on iOS. WatchConnectivity is not available on this platform.";
@@ -10,9 +7,9 @@ const UNSUPPORTED_MESSAGE =
 /**
  * Fallback stub for non-iOS platforms.
  * Properties return safe defaults and methods throw a descriptive error.
- * Typed as RnWatchConnectInterface (no cast), so a missing or mistyped member is a compile error.
+ * Typed as NativeRnWatchConnect (no cast), so a missing or mistyped member is a compile error.
  */
-const module: RnWatchConnectInterface = {
+const module: NativeRnWatchConnect = {
   isWatchSupported: false,
   isWatchPaired: false,
   isWatchAppInstalled: false,

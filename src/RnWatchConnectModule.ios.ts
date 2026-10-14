@@ -1,6 +1,7 @@
 import { requireNativeModule } from "expo";
 
-import type { RnWatchConnectInterface } from "./RnWatchConnect.types";
+import type { NativeRnWatchConnect } from "./RnWatchConnectNative.types";
 
-// Loads the native module from JSI. RnWatchConnect.types.ts is the only description of its interface.
-export default requireNativeModule<RnWatchConnectInterface>("RnWatchConnect");
+// Loads the native module from JSI. RnWatchConnect.types.ts describes the public interface;
+// RnWatchConnectNative.types.ts says how the native module differs from it (the reply events).
+export default requireNativeModule<NativeRnWatchConnect>("RnWatchConnect");

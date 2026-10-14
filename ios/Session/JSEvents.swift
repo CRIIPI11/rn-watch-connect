@@ -3,7 +3,8 @@
 //  RnWatchConnect
 //
 //  How Session values look on the JS side: event names, payload keys and Transfer shapes.
-//  They must match src/RnWatchConnect.types.ts; JSEventsTests and src/__tests__ check that.
+//  They must match src/RnWatchConnectNative.types.ts (the public types in src/RnWatchConnect.types.ts
+//  add a `reply` function to the reply events); JSEventsTests and src/__tests__ check that.
 //  Foundation only: see docs/adr/0001.
 //
 

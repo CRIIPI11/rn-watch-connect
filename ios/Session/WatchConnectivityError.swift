@@ -55,7 +55,7 @@ enum MessageError: LocalizedError {
         case .invalidBase64Decoding:
             return "Failed to decode base64 string"
         case .invalidReplyId:
-            return "Invalid reply ID"
+            return "Already replied, or the message is no longer waiting for a Reply"
         }
     }
 }

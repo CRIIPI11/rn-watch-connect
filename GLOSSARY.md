@@ -37,9 +37,18 @@ _Avoid_: Event, payload, notification
 A Message whose content is raw bytes instead of a dictionary.
 _Avoid_: Binary message
 
+**Outbound**:
+Sent by the iPhone app to the Watch.
+
+**Inbound**:
+Sent by the Watch to the iPhone app.
+
 **Reply**:
 The answer the receiver sends back to a Message or Data Message that asked for one.
 _Avoid_: Response, ack
+
+**Reply function**:
+What the app calls to send the Reply to an Inbound Message that asked for one.
 
 **Reply id**:
 The token that ties a received Message to the Reply the app sends back for it.
