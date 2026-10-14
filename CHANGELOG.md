@@ -30,3 +30,4 @@
 ### Internal
 
 - The iOS WatchConnectivity logic now lives in one Controller behind a port, with unit tests that run on macOS via `npm run test:ios` (see `docs/adr/0001-watch-session-behind-a-port.md`). User Info and File Transfers are now their own module behind it. Apart from the changes listed above, the JS interface is unchanged.
+- The JS interface is described once, in `RnWatchConnect.types.ts`. The non-iOS stub is type-checked against it, and tests catch drift with the Swift side: `npm test` compares the event names, and `npm run test:ios` checks every event's name and payload keys.

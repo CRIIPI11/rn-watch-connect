@@ -37,11 +37,11 @@ public class RnWatchConnectModule: Module {
         }
         
         Property("outstandingUserInfoTransfers") {
-            controller.outstandingUserInfoTransfers.map(Self.jsValue)
+            controller.outstandingUserInfoTransfers.map(JSEvents.value)
         }
 
         Property("outstandingFileTransfers") {
-            controller.outstandingFileTransfers.map(Self.jsValue)
+            controller.outstandingFileTransfers.map(JSEvents.value)
         }
         
         // Functions
@@ -99,7 +99,7 @@ public class RnWatchConnectModule: Module {
         }
 
         Function("transferUserInfo") { (userInfo: [String: Any]) -> [String: Any] in
-            Self.jsValue(self.controller.transferUserInfo(userInfo))
+            JSEvents.value(self.controller.transferUserInfo(userInfo))
         }
 
         Function("cancelUserInfoTransfer") { (transferId: String) -> [String: Any] in
@@ -108,7 +108,7 @@ public class RnWatchConnectModule: Module {
         }
 
         Function("transferFile") { (file: String, metadata: [String: Any]?) -> [String: Any] in
-            Self.jsValue(try self.controller.transferFile(file, metadata: metadata))
+            JSEvents.value(try self.controller.transferFile(file, metadata: metadata))
         }
         
         Function("cancelFileTransfer") { (transferId: String) -> [String: Any] in
@@ -117,20 +117,7 @@ public class RnWatchConnectModule: Module {
         }
 
         // Events
-        Events(
-            "onWatchPairedChanged",
-            "onWatchAppInstallChanged",
-            "onReachabilityChanged",
-            "onMessageReceived",
-            "onMessageWithReply",
-            "onDataMessageReceived",
-            "onDataMessageWithReply",
-            "onApplicationContextChanged",
-            "onUserInfoReceived",
-            "onFileReceived",
-            "onUserInfoTransferFinished",
-            "onFileTransferFinished"
-        )
+        Events(JSEvents.names)
         
         OnCreate {
             controller.onEvent = { [weak self] event in
@@ -146,61 +133,7 @@ public class RnWatchConnectModule: Module {
     }
     
     private func send(_ event: SessionEvent) {
-        switch event {
-        case let .pairedChanged(isPaired):
-            sendEvent("onWatchPairedChanged", ["isWatchPaired": isPaired])
-        case let .watchAppInstalledChanged(isAppInstalled):
-            sendEvent("onWatchAppInstallChanged", ["isWatchAppInstalled": isAppInstalled])
-        case let .reachabilityChanged(isReachable):
-            sendEvent("onReachabilityChanged", ["isWatchReachable": isReachable])
-        case let .message(message):
-            sendEvent("onMessageReceived", message)
-        case let .messageWithReply(message, replyId):
-            sendEvent("onMessageWithReply", ["message": message, "replyId": replyId])
-        case let .dataMessage(data):
-            sendEvent("onDataMessageReceived", ["data": data.base64EncodedString()])
-        case let .dataMessageWithReply(data, replyId):
-            sendEvent("onDataMessageWithReply", ["data": data.base64EncodedString(), "replyId": replyId])
-        case let .applicationContext(applicationContext):
-            sendEvent("onApplicationContextChanged", applicationContext)
-        case let .userInfo(userInfo):
-            sendEvent("onUserInfoReceived", userInfo)
-        case let .fileReceived(fileURL, metadata):
-            sendEvent("onFileReceived", ["fileURL": fileURL.absoluteString, "metadata": metadata])
-        case let .userInfoTransferFinished(transfer, error):
-            sendEvent("onUserInfoTransferFinished", Self.jsValue(transfer).merging(Self.jsError(error)) { $1 })
-        case let .fileTransferFinished(transfer, error):
-            sendEvent("onFileTransferFinished", Self.jsValue(transfer).merging(Self.jsError(error)) { $1 })
-        }
-    }
-    
-    // MARK: - JS shapes (OutstandingUserInfoTransfer, FileTransfer, TransferFinishError in RnWatchConnect.types.ts)
-    
-    private static func jsError(_ error: Error?) -> [String: Any] {
-        ["error": error.map { ["message": $0.localizedDescription] } ?? NSNull()]
-    }
-    
-    private static func jsValue(_ transfer: UserInfoTransferSnapshot) -> [String: Any] {
-        [
-            "id": transfer.id,
-            "isTransferring": transfer.isTransferring,
-            "userInfo": transfer.userInfo,
-        ]
-    }
-    
-    private static func jsValue(_ transfer: FileTransferSnapshot) -> [String: Any] {
-        [
-            "id": transfer.id,
-            "isTransferring": transfer.isTransferring,
-            "progress": [
-                "fractionCompleted": transfer.progress.fractionCompleted,
-                "completedUnitCount": transfer.progress.completedUnitCount,
-                "totalUnitCount": transfer.progress.totalUnitCount,
-            ],
-            "file": [
-                "fileURL": transfer.fileURL.absoluteString,
-                "metadata": transfer.metadata,
-            ],
-        ]
+        let jsEvent = JSEvents.event(for: event)
+        sendEvent(jsEvent.name, jsEvent.body)
     }
 }
