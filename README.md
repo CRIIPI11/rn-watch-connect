@@ -407,6 +407,18 @@ useEventListener(RnWatchConnect, "onFileReceived", (event) => {
 });
 ```
 
+#### `onFileReceiveFailed`
+
+Triggered when a file from the Watch arrived but the library couldn't move it out of WatchConnectivity's folder, for example because the iPhone is out of storage. The file is lost: WatchConnectivity has already deleted it, and `onFileReceived` doesn't fire for it. The event object is a [`FileReceiveFailedEvent`](#filereceivefailedevent). Use `fileName` and `metadata` to tell which file it was, for example to ask the Watch to send it again.
+
+**Example:**
+
+```typescript
+useEventListener(RnWatchConnect, "onFileReceiveFailed", ({ message, fileName }) => {
+  console.warn(`Lost ${fileName} from the Watch: ${message}`);
+});
+```
+
 #### `onUserInfoTransferFinished` / `onFileTransferFinished`
 
 Triggered when a Transfer finishes. **Each Transfer gets exactly one of these events**, however it ends:
@@ -512,6 +524,8 @@ useEventListener(
 
 `"notActivated" | "inactive" | "activated" | "unknown"`. `"unknown"` is returned when WatchConnectivity isn't supported on the device.
 
+The session activates when the module loads, and there is no event for a failed activation. If `watchActivationState` still isn't `"activated"` shortly after launch, activation failed.
+
 ### `OutstandingUserInfoTransfer`
 
 | Property       | Type                | Description                                   |
@@ -539,6 +553,14 @@ _Deprecated._ An alias of [`OutstandingUserInfoTransfer`](#outstandinguserinfotr
 | -------- | ------------------- | ------------------------------------- |
 | fileURL  | string              | The URL of the file being transferred |
 | metadata | Record<string, any> | The metadata associated with the file |
+
+### `FileReceiveFailedEvent`
+
+| Property | Type                        | Description                                                                 |
+| -------- | --------------------------- | --------------------------------------------------------------------------- |
+| message  | string                      | Why the file couldn't be kept, for example because the iPhone is out of storage |
+| fileName | string                      | The file name the Watch sent                                                 |
+| metadata | Record<string, any> \| null | What the Watch sent with the file, or `null` when it sent nothing            |
 
 ### `FileProgress`
 

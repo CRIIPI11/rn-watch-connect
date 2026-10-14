@@ -202,6 +202,10 @@ function ExampleScreen() {
     addLog("in", "File", `${name}: ${contents}`);
   });
 
+  useEventListener(RnWatchConnect, "onFileReceiveFailed", ({ message, fileName, metadata }) => {
+    addLog("error", "File lost", `${metadata?.name ?? fileName}: ${message}`);
+  });
+
   // Exactly one per transfer: delivered (error: null), failed, or cancelled.
   useEventListener(RnWatchConnect, "onFileTransferFinished", (transfer) => {
     const name = transfer.file.metadata?.name ?? "file";

@@ -170,7 +170,7 @@ final class WatchSessionController {
         // WatchConnectivity deletes a received file when its callback returns,
         // so the file is moved out here, synchronously, before hopping queues.
         if case let .file(fileURL, metadata) = event {
-            stageReceivedFile(at: fileURL, metadata: metadata ?? [:])
+            stageReceivedFile(at: fileURL, metadata: metadata)
             return
         }
         queue.async { [weak self] in
@@ -223,17 +223,18 @@ final class WatchSessionController {
         }
     }
 
-    private func stageReceivedFile(at fileURL: URL, metadata: [String: Any]) {
+    private func stageReceivedFile(at fileURL: URL, metadata: [String: Any]?) {
         let destinationURL = freeStagingURL(for: fileURL.lastPathComponent)
+        let event: SessionEvent
         do {
             try fileManager.moveItem(at: fileURL, to: destinationURL)
+            event = .fileReceived(fileURL: destinationURL, metadata: metadata ?? [:])
         } catch {
-            print("Error handling received file: \(error.localizedDescription)")
-            return
+            event = .fileReceiveFailed(fileName: fileURL.lastPathComponent, metadata: metadata, error: error)
         }
 
         queue.async { [weak self] in
-            self?.emit(.fileReceived(fileURL: destinationURL, metadata: metadata))
+            self?.emit(event)
         }
     }
 

@@ -10,6 +10,7 @@
 ### New features
 
 - **Transfer finish events.** `onUserInfoTransferFinished` and `onFileTransferFinished` tell you how each Transfer ended, with the Transfer snapshot plus `error` (`null` when delivered, `{ message }` when it failed or was cancelled). Each Transfer gets exactly one of these events. Cancelling sends it immediately.
+- **`onFileReceiveFailed`.** Tells you when a file from the Watch couldn't be kept, for example because the iPhone is out of storage, with `{ message, fileName, metadata }`. Before, the file was lost without any event.
 
 ### Bug fixes
 
@@ -30,4 +31,5 @@
 ### Internal
 
 - The iOS WatchConnectivity logic now lives in one Controller behind a port, with unit tests that run on macOS via `npm run test:ios` (see `docs/adr/0001-watch-session-behind-a-port.md`). User Info and File Transfers are now their own module behind it. Apart from the changes listed above, the JS interface is unchanged.
+- Received files are now moved out of WatchConnectivity's folder instead of copied and then deleted. Nothing changes for apps: the file still ends up in the temporary directory, and the app owns it from `onFileReceived` on.
 - The JS interface is described once, in `RnWatchConnect.types.ts`. The non-iOS stub is type-checked against it, and tests catch drift with the Swift side: `npm test` compares the event names, and `npm run test:ios` checks every event's name and payload keys.

@@ -28,6 +28,7 @@ enum JSEvents {
         "onApplicationContextChanged",
         "onUserInfoReceived",
         "onFileReceived",
+        "onFileReceiveFailed",
         "onUserInfoTransferFinished",
         "onFileTransferFinished",
     ]
@@ -54,6 +55,12 @@ enum JSEvents {
             return JSEvent(name: "onUserInfoReceived", body: userInfo)
         case let .fileReceived(fileURL, metadata):
             return JSEvent(name: "onFileReceived", body: ["fileURL": fileURL.absoluteString, "metadata": metadata])
+        case let .fileReceiveFailed(fileName, metadata, error):
+            return JSEvent(name: "onFileReceiveFailed", body: [
+                "message": error.localizedDescription,
+                "fileName": fileName,
+                "metadata": metadata ?? NSNull(),
+            ])
         case let .userInfoTransferFinished(transfer, error):
             return JSEvent(name: "onUserInfoTransferFinished", body: value(transfer).merging(errorValue(error)) { $1 })
         case let .fileTransferFinished(transfer, error):
