@@ -12,7 +12,7 @@
 - **Transfer finish events.** `onUserInfoTransferFinished` and `onFileTransferFinished` tell you how each Transfer ended, with the Transfer snapshot plus `error` (`null` when delivered, `{ message }` when it failed or was cancelled). Each Transfer gets exactly one of these events. Cancelling sends it immediately.
 - **`onFileReceiveFailed`.** Tells you when a file from the Watch couldn't be kept, for example because the iPhone is out of storage, with `{ message, fileName, metadata }`. Before, the file was lost without any event.
 
-- **Reply function on reply events.** `onMessageWithReply` and `onDataMessageWithReply` now include `reply`, which sends the Reply directly: `({ message, reply }) => reply({ ok: true })`. It returns a `Promise<void>` and rejects if the message was already replied to or is no longer waiting for a Reply.
+- **Reply function on reply events.** `onMessageWithReply` and `onDataMessageWithReply` now include `reply`, which sends the Reply directly: `({ message, reply }) => reply({ ok: true })`. It returns a `Promise<void>` and rejects if the message was already replied to or is no longer waiting for a Reply. This matches WatchConnectivity's delegate, which hands you a reply handler with the message, and makes replying simpler: no Reply id to keep and no extra `replyTo…` call.
 
 ### Deprecations
 
