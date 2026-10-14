@@ -13,6 +13,8 @@
 
 ### Bug fixes
 
+- **Received files with the same name no longer overwrite each other.** Each Received file was copied to the temporary directory under its own name, replacing any earlier file with that name, so two `onFileReceived` events could point at the same file. A name that's already taken is now numbered the way Finder does it (`photo(1).jpg`, `photo(2).jpg`, …). `metadata` is unchanged.
+
 - **Transfer ids can no longer point at the wrong Transfer.** Ids were derived from memory addresses, which the system can reuse after a Transfer ends, so an old id could cancel a different Transfer. Ids are now unique for the whole app run. Note that they are only valid for the current app run.
 
 - **Status event payloads now use the documented keys.** `onReachabilityChanged`, `onWatchPairedChanged` and `onWatchAppInstallChanged` now send `{ isWatchReachable }`, `{ isWatchPaired }` and `{ isWatchAppInstalled }`, matching the TypeScript types and the README. Before, native code sent `{ isReachable }`, `{ isPaired }` and `{ isAppInstalled }`, so code that followed the docs read `undefined` after the first change. For example, a `useEvent` value seeded from the property worked at first, then stayed `false` for good. If you worked around this by reading the old keys, switch to the documented ones.

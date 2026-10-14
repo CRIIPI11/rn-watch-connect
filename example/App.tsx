@@ -214,12 +214,15 @@ function ExampleScreen() {
 
   useEventListener(RnWatchConnect, "onUserInfoTransferFinished", (transfer) => {
     if (transfer.error) {
-      addLog("error", "User info transfer ended", `${shortId(transfer.id)}: ${transfer.error.message}`);
+      addLog(
+        "error",
+        "User info transfer ended",
+        `${shortId(transfer.id)}: ${transfer.error.message}`,
+      );
     } else {
       addLog("in", "User info delivered", shortId(transfer.id));
     }
   });
-
   // ─── UI ────────────────────────────────────────────────────────────────────
 
   return (
@@ -480,10 +483,18 @@ function ExampleScreen() {
             onPress={() =>
               run("Cancel finished", () => {
                 if (!lastFinishedId) {
-                  addLog("error", "Cancel finished", "Send a file and let it finish first.");
+                  addLog(
+                    "error",
+                    "Cancel finished",
+                    "Send a file and let it finish first.",
+                  );
                   return;
                 }
-                addLog("out", "Cancel", `finished transfer ${shortId(lastFinishedId)}`);
+                addLog(
+                  "out",
+                  "Cancel",
+                  `finished transfer ${shortId(lastFinishedId)}`,
+                );
                 cancel(lastFinishedId);
               })
             }
@@ -506,7 +517,9 @@ function ExampleScreen() {
                 <Text
                   style={{
                     color:
-                      transfer.status === "delivered" ? theme.success : theme.danger,
+                      transfer.status === "delivered"
+                        ? theme.success
+                        : theme.danger,
                   }}
                 >
                   {transfer.status === "delivered"
@@ -544,7 +557,9 @@ function ExampleScreen() {
                   const now = readText(file.uri);
                   addLog(
                     now === file.contents ? "in" : "error",
-                    now === file.contents ? "Re-read: unchanged" : "Re-read: overwritten",
+                    now === file.contents
+                      ? "Re-read: unchanged"
+                      : "Re-read: overwritten",
                     `${file.name}: ${now}`,
                   );
                 });
