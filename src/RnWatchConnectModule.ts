@@ -10,8 +10,9 @@ const UNSUPPORTED_MESSAGE =
 /**
  * Fallback stub for non-iOS platforms.
  * Properties return safe defaults and methods throw a descriptive error.
+ * Typed as RnWatchConnectInterface (no cast), so a missing or mistyped member is a compile error.
  */
-const module = {
+const module: RnWatchConnectInterface = {
   isWatchSupported: false,
   isWatchPaired: false,
   isWatchAppInstalled: false,
@@ -19,8 +20,8 @@ const module = {
   watchActivationState: "notActivated",
   applicationContext: {},
   receivedApplicationContext: {},
-  outstandingUserInfoTransfers: [] as OutstandingUserInfoTransfer[],
-  outstandingFileTransfers: [] as FileTransfer[],
+  outstandingUserInfoTransfers: [],
+  outstandingFileTransfers: [],
 
   sendMessage(): Promise<never> {
     return Promise.reject(new Error(UNSUPPORTED_MESSAGE));
@@ -56,12 +57,16 @@ const module = {
     throw new Error(UNSUPPORTED_MESSAGE);
   },
 
+  // No events are ever emitted on these platforms.
   addListener() {
-    return { remove: () => { } };
+    return { remove() {} };
   },
-  removeListener() { },
-  removeAllListeners() { },
-  emit() { },
-} as unknown as RnWatchConnectInterface;
+  removeListener() {},
+  removeAllListeners() {},
+  emit() {},
+  listenerCount() {
+    return 0;
+  },
+};
 
 export default module;
