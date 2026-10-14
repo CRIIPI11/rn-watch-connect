@@ -377,7 +377,7 @@ function ExampleScreen() {
 
       <Section
         title="User info"
-        footer="Queued and delivered in order, even in the background. To keep one outstanding (e.g. to test a relaunch), turn off Bluetooth on the iPhone first."
+        footer="Queued and delivered in order, even in the background. Outstanding ones (including any from before a relaunch) are listed here and can be cancelled."
       >
         <ActionButton
           title="Transfer user info"

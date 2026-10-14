@@ -9,8 +9,8 @@ const sameIds = (a: OutstandingUserInfoTransfer[], b: OutstandingUserInfoTransfe
 
 /**
  * User Info transfers that are not delivered yet, including ones from before a relaunch
- * (they get a new id after a relaunch). User Info is usually delivered at once, so the list
- * stays empty unless the watch is out of reach (e.g. Bluetooth off on the iPhone).
+ * (they get a new id after a relaunch). User Info is usually delivered at once (over Wi-Fi
+ * too, when Bluetooth is off), so the list is usually empty.
  */
 export function useOutstandingUserInfo() {
   const [outstanding, setOutstanding] = useState(
