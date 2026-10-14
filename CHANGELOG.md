@@ -12,6 +12,14 @@
 - **Transfer finish events.** `onUserInfoTransferFinished` and `onFileTransferFinished` tell you how each Transfer ended, with the Transfer snapshot plus `error` (`null` when delivered, `{ message }` when it failed or was cancelled). Each Transfer gets exactly one of these events. Cancelling sends it immediately.
 - **`onFileReceiveFailed`.** Tells you when a file from the Watch couldn't be kept, for example because the iPhone is out of storage, with `{ message, fileName, metadata }`. Before, the file was lost without any event.
 
+- **Reply function on reply events.** `onMessageWithReply` and `onDataMessageWithReply` now include `reply`, which sends the Reply directly: `({ message, reply }) => reply({ ok: true })`. It returns a `Promise<void>` and rejects if the message was already replied to or is no longer waiting for a Reply.
+
+### Deprecations
+
+These still work and will be removed in a future major version.
+
+- **`replyToMessage`, `replyToDataMessage` and the `replyId` field** of the reply events. Call the event's `reply` function instead.
+
 ### Bug fixes
 
 - **Received files with the same name no longer overwrite each other.** Each Received file was copied to the temporary directory under its own name, replacing any earlier file with that name, so two `onFileReceived` events could point at the same file. A name that's already taken is now numbered the way Finder does it (`photo(1).jpg`, `photo(2).jpg`, …). `metadata` is unchanged.
@@ -26,6 +34,7 @@
 - **Stricter TypeScript types.** `watchActivationState` is now `WatchActivationState` (`"notActivated" | "inactive" | "activated" | "unknown"`) instead of `string`. `applicationContext`, `receivedApplicationContext` and the payloads of `onMessageReceived`, `onMessageWithReply`, `onApplicationContextChanged` and `onUserInfoReceived` are now `Record<string, any>` instead of `any`. These are type changes only, with no runtime effect. Code that compares the activation state against a misspelled value now fails to compile.
 
 - **`transferUserInfo` returns the same shape as `outstandingUserInfoTransfers`.** It now includes `userInfo`, and in TypeScript it returns `OutstandingUserInfoTransfer`. `UserInfoTransfer` is now a deprecated alias of that type, so existing code still compiles.
+- **New reply error message.** Replying twice, or after the message stopped waiting, now rejects with "Already replied, or the message is no longer waiting for a Reply" instead of "Invalid reply ID". If you matched on the old text, update it.
 - **Status events fire only on a real change.** A new listener for `onReachabilityChanged`, `onWatchPairedChanged` or `onWatchAppInstallChanged` is no longer called right away with the current value. To get the current value, read `isWatchReachable`, `isWatchPaired` or `isWatchAppInstalled`, for example as the initial value of `useEvent`.
 
 ### Internal

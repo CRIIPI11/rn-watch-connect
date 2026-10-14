@@ -65,6 +65,10 @@ export type MessageWithReplyEvent = {
    * Rejects if this Message was already replied to, or is no longer waiting for a Reply.
    */
   reply: (reply: MessagePayload) => Promise<void>;
+  /**
+   * @deprecated Call `reply` instead. `replyId` and `replyToMessage` will be removed in a future
+   * major version.
+   */
   replyId: string;
 };
 
@@ -77,6 +81,10 @@ export type DataMessageWithReplyEvent = {
    * Rejects if this Data Message was already replied to, or is no longer waiting for a Reply.
    */
   reply: (reply: string) => Promise<void>;
+  /**
+   * @deprecated Call `reply` instead. `replyId` and `replyToDataMessage` will be removed in a
+   * future major version.
+   */
   replyId: string;
 };
 
@@ -140,6 +148,13 @@ export interface RnWatchConnectInterface
    * Sends a reply to a message received from the Watch.
    * @param replyId - The ID of the message to reply to
    * @param reply - The message to send as a reply
+   * @deprecated Use the `reply` function from the event instead. Will be removed in a future
+   * major version.
+   * ```ts
+   * useEventListener(RnWatchConnect, "onMessageWithReply", ({ message, reply }) => {
+   *   reply({ ok: true });
+   * });
+   * ```
    */
   replyToMessage(replyId: string, reply: MessagePayload): Promise<void>;
 
@@ -169,6 +184,13 @@ export interface RnWatchConnectInterface
    * Sends a reply to a data message received from the Watch.
    * @param replyId - The ID of the message to reply to
    * @param response - The base64 encoded string to send as a reply
+   * @deprecated Use the `reply` function from the event instead. Will be removed in a future
+   * major version.
+   * ```ts
+   * useEventListener(RnWatchConnect, "onDataMessageWithReply", ({ data, reply }) => {
+   *   reply("SGVsbG8gZnJvbSBpUGhvbmUh");
+   * });
+   * ```
    */
   replyToDataMessage(replyId: string, response: string): Promise<void>;
 

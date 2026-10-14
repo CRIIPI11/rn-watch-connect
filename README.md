@@ -120,6 +120,14 @@ await RnWatchConnect.sendMessageWithoutReply({
 
 #### `replyToMessage(replyId: string, reply: Record<string, any>): Promise<void>`
 
+> **Deprecated.** Use the `reply` function from [`onMessageWithReply`](#onmessagewithreply) instead. `replyToMessage` still works, and will be removed in a future major version.
+>
+> ```typescript
+> useEventListener(RnWatchConnect, "onMessageWithReply", ({ message, reply }) => {
+>   reply({ response: "Hello from iPhone!" });
+> });
+> ```
+
 Sends a reply to a message received from the Watch.
 
 **Parameters:**
@@ -127,7 +135,7 @@ Sends a reply to a message received from the Watch.
 - `replyId`: The ID of the message to reply to
 - `reply`: The reply message to send
 
-**Throws:** If the `replyId` is invalid
+**Throws:** If the message was already replied to, or is no longer waiting for a Reply
 
 **Example:**
 
@@ -198,6 +206,14 @@ try {
 
 #### `replyToDataMessage(replyId: string, response: string): Promise<void>`
 
+> **Deprecated.** Use the `reply` function from [`onDataMessageWithReply`](#ondatamessagewithreply) instead. `replyToDataMessage` still works, and will be removed in a future major version.
+>
+> ```typescript
+> useEventListener(RnWatchConnect, "onDataMessageWithReply", ({ data, reply }) => {
+>   reply("SGVsbG8gZnJvbSBpUGhvbmUh");
+> });
+> ```
+
 Sends a reply to a data message received from the Watch.
 
 **Parameters:**
@@ -205,7 +221,7 @@ Sends a reply to a data message received from the Watch.
 - `replyId`: The ID of the message to reply to
 - `response`: The base64 encoded response string
 
-**Throws:** If the `replyId` is invalid or the base64 string is malformed
+**Throws:** If the data message was already replied to or is no longer waiting for a Reply, or if the base64 string is malformed
 
 **Example:**
 
@@ -334,16 +350,15 @@ useEventListener(RnWatchConnect, "onMessageReceived", (event) => {
 Triggered when a message requiring a reply is received from the Watch. The event object is an object with the following properties:
 
 - `message`: The message object received from the Watch
-- `replyId`: The ID of the message to reply to
+- `reply(reply)`: The Reply function. Sends `reply` (an object) back to the Watch and returns a `Promise<void>`. It rejects if the message was already replied to, or is no longer waiting for a Reply (for example, after the last listener was removed). If several listeners get the same message, the first `reply` call wins.
+- `replyId`: **Deprecated**, use `reply`. The ID to pass to `replyToMessage`.
 
 **Example:**
 
 ```typescript
-useEventListener(RnWatchConnect, "onMessageWithReply", (event) => {
-  console.log("Message received:", event.message);
-  RnWatchConnect.replyToMessage(event.replyId, {
-    response: "Reply from iPhone",
-  });
+useEventListener(RnWatchConnect, "onMessageWithReply", ({ message, reply }) => {
+  console.log("Message received:", message);
+  reply({ response: "Reply from iPhone" });
 });
 ```
 
@@ -366,14 +381,15 @@ useEventListener(RnWatchConnect, "onDataMessageReceived", (event) => {
 Triggered when a data message requiring a reply is received from the Watch. The event object is an object with the following properties:
 
 - `data`: The base64 encoded data received from the Watch
-- `replyId`: The ID of the message to reply to
+- `reply(reply)`: The Reply function. Sends `reply` (a base64 encoded string) back to the Watch and returns a `Promise<void>`. It rejects in the same cases as for `onMessageWithReply`, or if the base64 string is malformed.
+- `replyId`: **Deprecated**, use `reply`. The ID to pass to `replyToDataMessage`.
 
 **Example:**
 
 ```typescript
-useEventListener(RnWatchConnect, "onDataMessageWithReply", (event) => {
-  console.log("Data message received:", event.data);
-  RnWatchConnect.replyToDataMessage(event.replyId, "SGVsbG8gZnJvbSBpUGhvbmUh");
+useEventListener(RnWatchConnect, "onDataMessageWithReply", ({ data, reply }) => {
+  console.log("Data message received:", data);
+  reply("SGVsbG8gZnJvbSBpUGhvbmUh");
 });
 ```
 

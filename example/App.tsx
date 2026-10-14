@@ -155,9 +155,9 @@ function ExampleScreen() {
   useEventListener(
     RnWatchConnect,
     "onMessageWithReply",
-    ({ message, replyId }) => {
+    ({ message, reply }) => {
       addLog("in", "Message (replied)", message.text ?? message);
-      RnWatchConnect.replyToMessage(replyId, {
+      reply({
         reply: `iPhone got: ${message.text ?? "your message"}`,
       } satisfies TextReply);
     },
@@ -170,13 +170,10 @@ function ExampleScreen() {
   useEventListener(
     RnWatchConnect,
     "onDataMessageWithReply",
-    ({ data, replyId }) => {
+    ({ data, reply }) => {
       const text = base64ToText(data);
       addLog("in", "Data (replied)", text);
-      RnWatchConnect.replyToDataMessage(
-        replyId,
-        textToBase64(`iPhone got ${text.length} characters ✅`),
-      );
+      reply(textToBase64(`iPhone got ${text.length} characters ✅`));
     },
   );
 

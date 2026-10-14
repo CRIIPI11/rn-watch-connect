@@ -52,10 +52,14 @@ Run these first; if any fail, stop and fix before the edge cases.
 
 ## 4. Replies
 
-- [ ] **Reply after unmount.** Receive `onMessageWithReply`, unmount the listening component (removing the last listener) before calling `replyToMessage`. Record whether the reply throws `Invalid reply ID` and how long the watch waits before its error handler fires. *(At time of writing* `OnStopObserving` *clears pending replies.)*
+The example app replies with the event's `reply` function.
+
+- [ ] **Reply function.** From the watch, send a message and a data message that ask for a Reply: each gets the iPhone's Reply, and Activity logs "Message (replied)" / "Data (replied)".
+
+- [ ] **Reply after unmount.** Receive `onMessageWithReply`, unmount the listening component (removing the last listener) before calling `reply`. Record whether `reply` rejects with "Already replied, or the message is no longer waiting for a Reply" and how long the watch waits before its error handler fires. *(At time of writing* `OnStopObserving` *clears pending replies.)*
 - [ ] **No reply.** Receive `onMessageWithReply` and never reply. Note how long until the watch's error handler fires.
 - [ ] **Slow reply.** Reply after ~10 s and after ~60 s; record which still reach the watch.
-- [ ] **Double reply.** Call `replyToMessage` twice with the same `replyId`; the second must throw, not crash.
+- [ ] **Double reply.** Call `reply` twice for the same message; the second must reject, not crash.
 - [ ] **Burst.** Have the watch send 20 messages-with-reply in quick succession; reply to all; every reply arrives, no crash (exercises concurrent access to the pending-reply store).
 
 
