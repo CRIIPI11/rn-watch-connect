@@ -19,6 +19,16 @@ export type File = {
   metadata: Record<string, any>;
 };
 
+/** A file from the Watch that the library couldn't keep, so it is lost. */
+export type FileReceiveFailedEvent = {
+  /** Why the file couldn't be kept, for example because the iPhone is out of storage. */
+  message: string;
+  /** The file name the Watch sent. */
+  fileName: string;
+  /** What the Watch sent with the file, or `null` when it sent nothing. */
+  metadata: Record<string, any> | null;
+};
+
 export type FileProgress = {
   fractionCompleted: number;
   completedUnitCount: number;
@@ -68,6 +78,8 @@ export type RnWatchConnectModuleEvents = {
   onUserInfoReceived: (params: Record<string, any>) => void;
   /** Triggered when a file is received from the Watch */
   onFileReceived: (params: File) => void;
+  /** Triggered when a file from the Watch couldn't be kept (for example, the iPhone is out of storage). The file is lost. */
+  onFileReceiveFailed: (event: FileReceiveFailedEvent) => void;
   /** Triggered exactly once per User Info Transfer: delivered (`error: null`), failed, or cancelled */
   onUserInfoTransferFinished: (event: UserInfoTransferFinishedEvent) => void;
   /** Triggered exactly once per File Transfer: delivered (`error: null`), failed, or cancelled */

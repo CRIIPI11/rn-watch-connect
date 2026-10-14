@@ -250,7 +250,7 @@ final class WatchSessionControllerTests: XCTestCase {
         return url
     }
 
-    func testReceivedFileIsStagedAndTheOriginalDeleted() throws {
+    func testReceivedFileIsMovedToStaging() throws {
         let incoming = try makeIncomingFile(named: "photo.jpg", contents: "jpeg")
 
         receive(.file(fileURL: incoming, metadata: ["album": "trip"]))
@@ -267,9 +267,31 @@ final class WatchSessionControllerTests: XCTestCase {
 
         port.simulate(.file(fileURL: incoming, metadata: nil))
 
-        // No queue drain: the copy must already exist.
+        // No queue drain: the moved file must already exist.
         XCTAssertTrue(FileManager.default.fileExists(
             atPath: stagingDirectory.appendingPathComponent("note.txt").path))
+    }
+
+    func testReceivedFileThatCantBeMovedIsReportedAsFailed() throws {
+        let incoming = try makeIncomingFile(named: "photo.jpg", contents: "jpeg")
+        try FileManager.default.removeItem(at: stagingDirectory) // the move now fails
+
+        receive(.file(fileURL: incoming, metadata: ["album": "trip"]))
+
+        guard case let .fileReceiveFailed(fileName, metadata, error) = events.single else { return XCTFail("\(events)") }
+        XCTAssertEqual(fileName, "photo.jpg")
+        XCTAssertEqual(metadata?["album"] as? String, "trip")
+        XCTAssertFalse(error.localizedDescription.isEmpty)
+    }
+
+    func testFailedReceivedFileWithoutMetadataReportsNil() throws {
+        let incoming = try makeIncomingFile(named: "note.txt", contents: "x")
+        try FileManager.default.removeItem(at: stagingDirectory)
+
+        receive(.file(fileURL: incoming, metadata: nil))
+
+        guard case let .fileReceiveFailed(_, metadata, _) = events.single else { return XCTFail("\(events)") }
+        XCTAssertNil(metadata)
     }
 
     /// Receives files with these names and contents; returns the staged file names, in order.
@@ -326,12 +348,13 @@ final class WatchSessionControllerTests: XCTestCase {
         XCTAssertEqual(metadata["name"] as? String, "log.txt")
     }
 
-    func testReceivedFileThatCannotBeCopiedReportsNothing() {
+    func testReceivedFileThatIsMissingIsReportedAsFailed() {
         let missing = FileManager.default.temporaryDirectory.appendingPathComponent("missing-\(UUID().uuidString)")
 
         receive(.file(fileURL: missing, metadata: nil))
 
-        XCTAssertTrue(events.isEmpty)
+        guard case let .fileReceiveFailed(fileName, _, _) = events.single else { return XCTFail("\(events)") }
+        XCTAssertEqual(fileName, missing.lastPathComponent)
     }
 }
 

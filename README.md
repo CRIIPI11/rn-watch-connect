@@ -391,11 +391,12 @@ useEventListener(RnWatchConnect, "onUserInfoReceived", (event) => {
 
 #### `onFileReceived`
 
-Triggered when a file is received from the Watch. The event object is a [`File`](#file): `fileURL` points at a copy of the file you can read, and `metadata` is what the Watch sent with it.
+Triggered when a file is received from the Watch. The event object is a [`File`](#file): `fileURL` points at the file, which your app now owns, and `metadata` is what the Watch sent with it.
 
 Where Received files are kept:
 
-- The library copies each Received file into your app's **temporary directory**. iOS may delete files there at any time when your app isn't running, so **move or copy the file somewhere permanent if you need to keep it**, and delete it when you're done. The library never deletes Received files.
+- WatchConnectivity deletes a delivered file as soon as its delegate returns, before any JS can run. So the library moves each Received file into your app's **temporary directory** first, and does nothing else with it. From `onFileReceived` on, the file is yours: the library never moves, overwrites or deletes it again.
+- iOS may delete files in the temporary directory at any time when your app isn't running, so **move or copy the file somewhere permanent if you need to keep it**, and delete it when you're done. A file you ignore is eventually cleaned up by iOS.
 - Received files are never overwritten. If a file with the same name is already there, the new one is numbered the way Finder does it: `photo.jpg`, then `photo(1).jpg`, `photo(2).jpg`, and so on. `metadata` is passed through unchanged, so you can still read the original name if the Watch sent it there.
 
 **Example:**
@@ -403,6 +404,18 @@ Where Received files are kept:
 ```typescript
 useEventListener(RnWatchConnect, "onFileReceived", (event) => {
   console.log("File received:", event);
+});
+```
+
+#### `onFileReceiveFailed`
+
+Triggered when a file from the Watch arrived but the library couldn't move it out of WatchConnectivity's folder, for example because the iPhone is out of storage. The file is lost: WatchConnectivity has already deleted it, and `onFileReceived` doesn't fire for it. The event object is a [`FileReceiveFailedEvent`](#filereceivefailedevent). Use `fileName` and `metadata` to tell which file it was, for example to ask the Watch to send it again.
+
+**Example:**
+
+```typescript
+useEventListener(RnWatchConnect, "onFileReceiveFailed", ({ message, fileName }) => {
+  console.warn(`Lost ${fileName} from the Watch: ${message}`);
 });
 ```
 
@@ -511,6 +524,8 @@ useEventListener(
 
 `"notActivated" | "inactive" | "activated" | "unknown"`. `"unknown"` is returned when WatchConnectivity isn't supported on the device.
 
+The session activates when the module loads, and there is no event for a failed activation. If `watchActivationState` still isn't `"activated"` shortly after launch, activation failed.
+
 ### `OutstandingUserInfoTransfer`
 
 | Property       | Type                | Description                                   |
@@ -538,6 +553,14 @@ _Deprecated._ An alias of [`OutstandingUserInfoTransfer`](#outstandinguserinfotr
 | -------- | ------------------- | ------------------------------------- |
 | fileURL  | string              | The URL of the file being transferred |
 | metadata | Record<string, any> | The metadata associated with the file |
+
+### `FileReceiveFailedEvent`
+
+| Property | Type                        | Description                                                                 |
+| -------- | --------------------------- | --------------------------------------------------------------------------- |
+| message  | string                      | Why the file couldn't be kept, for example because the iPhone is out of storage |
+| fileName | string                      | The file name the Watch sent                                                 |
+| metadata | Record<string, any> \| null | What the Watch sent with the file, or `null` when it sent nothing            |
 
 ### `FileProgress`
 

@@ -16,8 +16,11 @@ enum SessionEvent {
     case dataMessageWithReply(Data, replyId: String)
     case applicationContext([String: Any])
     case userInfo([String: Any])
-    /// `fileURL` points at the staged copy, which the app can read.
+    /// `fileURL` points at the staged file, which the app now owns.
     case fileReceived(fileURL: URL, metadata: [String: Any])
+    /// A Received file the library couldn't move out of WatchConnectivity's folder: it is lost.
+    /// `fileName` is the name the Watch sent; `metadata` is nil when the Watch sent none.
+    case fileReceiveFailed(fileName: String, metadata: [String: Any]?, error: Error)
     /// Sent exactly once per Transfer. `error` is nil when the Transfer was delivered.
     case userInfoTransferFinished(UserInfoTransferSnapshot, error: Error?)
     /// Sent exactly once per Transfer. `error` is nil when the Transfer was delivered.

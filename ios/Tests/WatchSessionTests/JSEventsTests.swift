@@ -63,6 +63,19 @@ final class JSEventsTests: XCTestCase {
         )
     }
 
+    func testFileReceiveFailed() {
+        let error = NSError(domain: NSCocoaErrorDomain, code: NSFileWriteOutOfSpaceError)
+        assertEvent(
+            .fileReceiveFailed(fileName: "a.txt", metadata: ["k": 1], error: error),
+            name: "onFileReceiveFailed",
+            keys: ["message", "fileName", "metadata"]
+        )
+        let body = JSEvents.event(for: .fileReceiveFailed(fileName: "a.txt", metadata: nil, error: error)).body
+        XCTAssertEqual(body["message"] as? String, error.localizedDescription)
+        XCTAssertEqual(body["fileName"] as? String, "a.txt")
+        XCTAssertTrue(body["metadata"] is NSNull, "missing metadata is null")
+    }
+
     func testUserInfoTransferShape() {
         XCTAssertEqual(Set(JSEvents.value(userInfoTransfer).keys), ["id", "isTransferring", "userInfo"])
     }
@@ -99,6 +112,6 @@ final class JSEventsTests: XCTestCase {
 
     func testNamesAreUnique() {
         XCTAssertEqual(Set(JSEvents.names).count, JSEvents.names.count)
-        XCTAssertEqual(JSEvents.names.count, 12)
+        XCTAssertEqual(JSEvents.names.count, 13)
     }
 }

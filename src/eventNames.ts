@@ -18,6 +18,7 @@ export const EVENT_NAMES = [
   "onApplicationContextChanged",
   "onUserInfoReceived",
   "onFileReceived",
+  "onFileReceiveFailed",
   "onUserInfoTransferFinished",
   "onFileTransferFinished",
 ] as const satisfies readonly EventName[];
