@@ -135,7 +135,7 @@ Sends a reply to a message received from the Watch.
 - `replyId`: The ID of the message to reply to
 - `reply`: The reply message to send
 
-**Throws:** If the message was already replied to, or is no longer waiting for a Reply
+**Throws:** `ERR_REPLY_NOT_PENDING` if the message was already replied to, or is no longer waiting for a Reply
 
 **Example:**
 
@@ -221,7 +221,7 @@ Sends a reply to a data message received from the Watch.
 - `replyId`: The ID of the message to reply to
 - `response`: The base64 encoded response string
 
-**Throws:** If the data message was already replied to or is no longer waiting for a Reply, or if the base64 string is malformed
+**Throws:** `ERR_REPLY_NOT_PENDING` if the data message was already replied to or is no longer waiting for a Reply, or `ERR_INVALID_BASE64` if the base64 string is malformed
 
 **Example:**
 
@@ -280,7 +280,7 @@ Cancels a pending user info transfer.
 
 - `{ id: string }`: The transfer ID
 
-**Throws:** If the `transferId` is invalid
+**Throws:** `ERR_INVALID_TRANSFER_ID` if the `transferId` is invalid
 
 **Example:**
 
@@ -301,7 +301,7 @@ Transfers a file to the Watch.
 
 - [`FileTransfer`](#filetransfer): The transfer, in the same shape as `outstandingFileTransfers`
 
-**Throws:** If the file URL is invalid or the file is not found
+**Throws:** `ERR_INVALID_FILE_URL` if the file URL is invalid, or `ERR_FILE_NOT_FOUND` if the file is not found
 
 **Example:**
 
@@ -323,7 +323,7 @@ Cancels a pending file transfer.
 
 - `{ id: string }`: The transfer ID
 
-**Throws:** If the `transferId` is invalid
+**Throws:** `ERR_INVALID_TRANSFER_ID` if the `transferId` is invalid
 
 **Example:**
 
@@ -442,12 +442,12 @@ Triggered when a Transfer finishes. **Each Transfer gets exactly one of these ev
 | How it ended | `error` |
 | --- | --- |
 | Delivered to the Watch | `null` |
-| Failed | `{ message }` from WatchConnectivity |
-| Cancelled with `cancelUserInfoTransfer` / `cancelFileTransfer` | `{ message: "Transfer cancelled" }`, sent immediately when you cancel |
+| Failed | `{ message, code }` from WatchConnectivity, for example `code: "ERR_DELIVERY_FAILED"` |
+| Cancelled with `cancelUserInfoTransfer` / `cancelFileTransfer` | `{ message: "Transfer cancelled", code: "ERR_TRANSFER_CANCELLED" }`, sent immediately when you cancel |
 
 The event object is the Transfer snapshot ([`OutstandingUserInfoTransfer`](#outstandinguserinfotransfer) or [`FileTransfer`](#filetransfer)) plus `error`.
 
-If you cancel a Transfer that was already delivered, the cancel throws `Invalid transfer ID`, and this event reports the delivery with `error: null`.
+If you cancel a Transfer that was already delivered, the cancel throws `ERR_INVALID_TRANSFER_ID`, and this event reports the delivery with `error: null`.
 
 WatchConnectivity has no progress event. To show progress, read `outstandingFileTransfers` periodically, and use this event to know when a Transfer is done.
 
@@ -461,8 +461,10 @@ Good to know:
 
 ```typescript
 useEventListener(RnWatchConnect, "onFileTransferFinished", (transfer) => {
-  if (transfer.error) {
-    console.log("Transfer failed:", transfer.id, transfer.error.message);
+  if (transfer.error?.code === "ERR_TRANSFER_CANCELLED") {
+    console.log("Transfer cancelled:", transfer.id);
+  } else if (transfer.error) {
+    console.log("Transfer failed:", transfer.id, transfer.error.code, transfer.error.message);
   } else {
     console.log("Transfer delivered:", transfer.file.fileURL);
   }
@@ -532,6 +534,45 @@ useEventListener(
 );
 ```
 
+## Errors
+
+Every failure has a stable **Error code** in `code`, on thrown and rejected errors and on the `error` in events. **Match on `code`, never on `message`.** Messages can change between versions, and functions that throw directly (rather than reject a Promise) get Expo's prefix: "Calling the 'transferFile' function has failed → Caused by: …".
+
+```typescript
+import RnWatchConnect, { type WatchConnectErrorCode } from "rn-watch-connect";
+
+try {
+  await RnWatchConnect.sendMessageWithoutReply({ ping: 1 });
+} catch (error) {
+  const code = (error as { code?: WatchConnectErrorCode }).code;
+  if (code === "ERR_WATCH_NOT_REACHABLE") {
+    // Try again later, or use transferUserInfo, which doesn't need the Watch to be reachable.
+  }
+}
+```
+
+The same failure has the same code whichever function reports it: for example, `sendMessage` and `sendMessageWithoutReply` both use `ERR_WATCH_NOT_REACHABLE`.
+
+The library's own checks:
+
+| Code | When |
+| --- | --- |
+| `ERR_WATCH_NOT_REACHABLE` | A Message or Data Message was sent while the Watch isn't reachable |
+| `ERR_REPLY_NOT_PENDING` | `reply` was called for a message already replied to, or no longer waiting for a Reply |
+| `ERR_INVALID_BASE64` | A Data Message or data Reply isn't valid base64 (`message` says why) |
+| `ERR_INVALID_TRANSFER_ID` | `cancelUserInfoTransfer` / `cancelFileTransfer` got an id that isn't an outstanding Transfer |
+| `ERR_INVALID_FILE_URL` | `transferFile` got a URL it can't read |
+| `ERR_FILE_NOT_FOUND` | `transferFile` got a file that doesn't exist |
+| `ERR_TRANSFER_CANCELLED` | In a finish event: the Transfer was cancelled |
+| `ERR_INSUFFICIENT_SPACE` | In `onFileReceiveFailed`: the iPhone is out of storage (also WatchConnectivity's own code for this) |
+| `ERR_FILE_RECEIVE_FAILED` | In `onFileReceiveFailed`: the file couldn't be kept for another reason |
+| `ERR_UNSUPPORTED_PLATFORM` | A method was called on a platform other than iOS |
+| `ERR_UNEXPECTED` | Any other failure |
+
+WatchConnectivity's own errors (for example when sending, updating the Application Context, or in finish events) use `ERR_` plus Apple's [`WCError.Code`](https://developer.apple.com/documentation/watchconnectivity/wcerror/code) name: `ERR_GENERIC_ERROR`, `ERR_SESSION_NOT_SUPPORTED`, `ERR_SESSION_MISSING_DELEGATE`, `ERR_SESSION_NOT_ACTIVATED`, `ERR_DEVICE_NOT_PAIRED`, `ERR_WATCH_APP_NOT_INSTALLED`, `ERR_INVALID_PARAMETER`, `ERR_PAYLOAD_TOO_LARGE`, `ERR_PAYLOAD_UNSUPPORTED_TYPES`, `ERR_MESSAGE_REPLY_FAILED`, `ERR_MESSAGE_REPLY_TIMED_OUT`, `ERR_FILE_ACCESS_DENIED`, `ERR_DELIVERY_FAILED`, `ERR_INSUFFICIENT_SPACE`, `ERR_SESSION_INACTIVE`, `ERR_TRANSFER_TIMED_OUT`, `ERR_COMPANION_APP_NOT_INSTALLED` and `ERR_WATCH_ONLY_APP`. Its `notReachable` uses `ERR_WATCH_NOT_REACHABLE`.
+
+`WatchConnectErrorCode` is the TypeScript union of every code.
+
 ## Types
 
 > **Transfer ids** (`id` on the types below) are valid only for the current app run. After the app restarts, a Transfer that is still outstanding gets a new id.
@@ -575,6 +616,7 @@ _Deprecated._ An alias of [`OutstandingUserInfoTransfer`](#outstandinguserinfotr
 | Property | Type                        | Description                                                                 |
 | -------- | --------------------------- | --------------------------------------------------------------------------- |
 | message  | string                      | Why the file couldn't be kept, for example because the iPhone is out of storage |
+| code     | [`WatchConnectErrorCode`](#errors) | `ERR_INSUFFICIENT_SPACE` when the iPhone is out of storage, otherwise `ERR_FILE_RECEIVE_FAILED` |
 | fileName | string                      | The file name the Watch sent                                                 |
 | metadata | Record<string, any> \| null | What the Watch sent with the file, or `null` when it sent nothing            |
 

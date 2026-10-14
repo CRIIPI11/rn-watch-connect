@@ -35,7 +35,7 @@ Run these first; if any fail, stop and fix before the edge cases.
 
 - [ ] Event payload keys match the TypeScript types: `onReachabilityChanged` → `isWatchReachable`, `onWatchPairedChanged` → `isWatchPaired`, `onWatchAppInstallChanged` → `isWatchAppInstalled`.
 - [ ] Reachability toggles: lower the watch wrist / leave the watch app → `onReachabilityChanged(false)`; bring the watch app to the foreground → `true`.
-- [ ] Bluetooth off on the iPhone → unreachable; `sendMessage` rejects with "Watch is not reachable" instead of hanging.
+- [ ] Bluetooth off on the iPhone → unreachable; `sendMessage` rejects with `ERR_WATCH_NOT_REACHABLE` instead of hanging. **Send, no reply** throws the same code (Activity shows "ERR_WATCH_NOT_REACHABLE · …" for both), and so do **Send data** and its no-reply version.
 - [ ] Uninstall the watch app → `onWatchAppInstallChanged(false)`; reinstall → `true`.
 - [ ] Adding the first listener does **not** fire spurious empty events (`onUserInfoReceived({})`, `onFileReceived({})`, `onApplicationContextChanged({})`).
 
@@ -70,10 +70,10 @@ Use the example app's **File transfers** section (the Transfer playground). Each
 
 - [ ] **Same shape.** Start a "5 MB file": the object returned by `transferFile` has the same keys as its entry in `outstandingFileTransfers` (`progress.fractionCompleted`, `completedUnitCount`, `totalUnitCount`), and progress updates while it sends.
 - [ ] **Delivered.** "Small file" and "Transfer user info": each logs one "… delivered" entry with `error: null`. The short id in the "… delivered" entry matches the one in the entry that started it. This confirms WatchConnectivity hands back the same transfer object in `didFinish`; if the ids differ, the finish events can't be matched to their transfers.
-- [ ] **Cancelled.** Start "Huge file · 50 MB" and press **Cancel** while it sends: one "File transfer ended: … Transfer cancelled" entry appears **immediately**, the row shows "Cancelled", and no second entry follows (wait about 30 s).
+- [ ] **Cancelled.** Start "Huge file · 50 MB" and press **Cancel** while it sends: one "File transfer ended: … ERR_TRANSFER_CANCELLED · Transfer cancelled" entry appears **immediately**, the row shows "Cancelled", and no second entry follows (wait about 30 s).
 - [ ] **Cancel one of two.** Start two huge files and cancel the first: only the first ends as cancelled, and the second is delivered.
-- [ ] **Late cancel.** After a transfer is delivered, press **Cancel finished**: it throws `Invalid transfer ID`, nothing else is cancelled, and no new finish event appears.
-- [ ] **Failed at start.** Press **Missing file**: it throws `File not found` right away, and **no** finish event follows.
+- [ ] **Late cancel.** After a transfer is delivered, press **Cancel finished**: it throws `ERR_INVALID_TRANSFER_ID`, nothing else is cancelled, and no new finish event appears.
+- [ ] **Failed at start.** Press **Missing file**: it throws `ERR_FILE_NOT_FOUND` right away, and **no** finish event follows.
 - [ ] **Delete source while sending.** Start "Huge file" and delete its source file. *(Result on iOS 27.0.1: still delivered. WatchConnectivity keeps its own copy, so this is not a failure trigger.)*
 - [ ] **Uninstall the watch app while sending.** Start "Huge file", then uninstall the watch app. Record what happens. *(Result on iOS 27.0.1 / watchOS 27.0.1: progress reaches 100 %, the transfer stays in `outstandingFileTransfers`, and no finish event fires. **Cancel** ends it with one "Transfer cancelled" event. After reinstalling the watch app, the file is **not** delivered and the transfer stays listed; Cancel still ends it. This is WatchConnectivity behaviour, not the library's.)*
 - [ ] **Unpair the watch while sending.** Record whether this produces a failed finish event, and its message. *(Not verified: on iOS 27.0.1 the file finished before the watch could be unpaired. Assumed to behave like uninstalling the watch app.)*
@@ -89,7 +89,7 @@ Use the example app's **File transfers** section (the Transfer playground). Each
 - [ ] `transferFile` with a `file://` URL → succeeds.
 - [ ] `transferFile` with a plain path (no scheme) → record behaviour.
 - [ ] `transferFile` with a path containing spaces, both percent-encoded and not — **run on iOS 15–16 and on iOS 17+**; `URL(string:)` handles unencoded spaces differently across these versions.
-- [ ] `transferFile` with a non-existent path → rejects with "File not found".
+- [ ] `transferFile` with a non-existent path → throws `ERR_FILE_NOT_FOUND`.
 - [ ] `sendDataMessage("")` → record behaviour (currently accepted as empty data).
 - [ ] `sendDataMessage` with URL-safe base64 (`-`, `_`) or embedded newlines → rejects with a base64 error.
 - [ ] Message payload near the size limit: send a dictionary of roughly 60 KB and roughly 100 KB; the oversized one must reject with an error, not hang.
