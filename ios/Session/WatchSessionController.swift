@@ -224,11 +224,8 @@ final class WatchSessionController {
     }
 
     private func stageReceivedFile(at fileURL: URL, metadata: [String: Any]) {
-        let destinationURL = stagingDirectory.appendingPathComponent(fileURL.lastPathComponent)
+        let destinationURL = freeStagingURL(for: fileURL.lastPathComponent)
         do {
-            if fileManager.fileExists(atPath: destinationURL.path) {
-                try fileManager.removeItem(at: destinationURL)
-            }
             try fileManager.copyItem(at: fileURL, to: destinationURL)
         } catch {
             print("Error handling received file: \(error.localizedDescription)")
@@ -243,6 +240,32 @@ final class WatchSessionController {
             try fileManager.removeItem(at: fileURL)
         } catch {
             print("Error removing received file: \(error.localizedDescription)")
+        }
+    }
+
+    /// The staging URL for `name`, numbered the way Finder does when the name is taken:
+    /// `photo.jpg`, then `photo(1).jpg`, `photo(2).jpg`… A name that already ends in a number
+    /// continues from it (`photo(1).jpg` → `photo(2).jpg`). Staged files are never overwritten.
+    private func freeStagingURL(for name: String) -> URL {
+        let candidate = stagingDirectory.appendingPathComponent(name)
+        guard fileManager.fileExists(atPath: candidate.path) else { return candidate }
+
+        let fileExtension = (name as NSString).pathExtension
+        var base = (name as NSString).deletingPathExtension
+        var number = 1
+        if let match = base.range(of: #"\((\d+)\)$"#, options: .regularExpression),
+           let existing = Int(base[match].dropFirst().dropLast()) {
+            base = String(base[..<match.lowerBound])
+            number = existing + 1
+        }
+
+        while true {
+            let numbered = fileExtension.isEmpty
+                ? "\(base)(\(number))"
+                : "\(base)(\(number)).\(fileExtension)"
+            let url = stagingDirectory.appendingPathComponent(numbered)
+            if !fileManager.fileExists(atPath: url.path) { return url }
+            number += 1
         }
     }
 

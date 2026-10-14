@@ -391,9 +391,12 @@ useEventListener(RnWatchConnect, "onUserInfoReceived", (event) => {
 
 #### `onFileReceived`
 
-Triggered when a file is received from the Watch. The event object is an object with the following properties:
+Triggered when a file is received from the Watch. The event object is a [`File`](#file): `fileURL` points at a copy of the file you can read, and `metadata` is what the Watch sent with it.
 
-- `File`: The file object received from the Watch
+Where Received files are kept:
+
+- The library copies each Received file into your app's **temporary directory**. iOS may delete files there at any time when your app isn't running, so **move or copy the file somewhere permanent if you need to keep it**, and delete it when you're done. The library never deletes Received files.
+- Received files are never overwritten. If a file with the same name is already there, the new one is numbered the way Finder does it: `photo.jpg`, then `photo(1).jpg`, `photo(2).jpg`, and so on. `metadata` is passed through unchanged, so you can still read the original name if the Watch sent it there.
 
 **Example:**
 

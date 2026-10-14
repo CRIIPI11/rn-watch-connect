@@ -272,15 +272,58 @@ final class WatchSessionControllerTests: XCTestCase {
             atPath: stagingDirectory.appendingPathComponent("note.txt").path))
     }
 
-    func testReceivedFileOverwritesAStagedFileWithTheSameName() throws {
-        try "old".write(to: stagingDirectory.appendingPathComponent("log.txt"), atomically: true, encoding: .utf8)
-        let incoming = try makeIncomingFile(named: "log.txt", contents: "new")
+    /// Receives files with these names and contents; returns the staged file names, in order.
+    private func receiveFiles(_ files: [(name: String, contents: String)]) throws -> [String] {
+        for file in files {
+            receive(.file(fileURL: try makeIncomingFile(named: file.name, contents: file.contents), metadata: ["name": file.name]))
+        }
+        return events.compactMap { event -> String? in
+            guard case let .fileReceived(fileURL, _) = event else { return nil }
+            return fileURL.lastPathComponent
+        }
+    }
 
-        receive(.file(fileURL: incoming, metadata: nil))
+    func testReceivedFilesWithTheSameNameAreNumberedAndKeepTheirContents() throws {
+        let names = try receiveFiles([("log.txt", "first"), ("log.txt", "second"), ("log.txt", "third")])
 
-        guard case let .fileReceived(fileURL, metadata) = events.single else { return XCTFail("\(events)") }
-        XCTAssertEqual(try String(contentsOf: fileURL, encoding: .utf8), "new")
-        XCTAssertTrue(metadata.isEmpty)
+        XCTAssertEqual(names, ["log.txt", "log(1).txt", "log(2).txt"])
+        let contents = try names.map {
+            try String(contentsOf: stagingDirectory.appendingPathComponent($0), encoding: .utf8)
+        }
+        XCTAssertEqual(contents, ["first", "second", "third"])
+    }
+
+    func testNumberingSkipsNamesAlreadyTaken() throws {
+        try "x".write(to: stagingDirectory.appendingPathComponent("log.txt"), atomically: true, encoding: .utf8)
+        try "x".write(to: stagingDirectory.appendingPathComponent("log(1).txt"), atomically: true, encoding: .utf8)
+
+        XCTAssertEqual(try receiveFiles([("log.txt", "new")]), ["log(2).txt"])
+    }
+
+    func testNameWithoutExtensionGetsTheNumberAtTheEnd() throws {
+        XCTAssertEqual(try receiveFiles([("notes", "a"), ("notes", "b")]), ["notes", "notes(1)"])
+    }
+
+    func testNameThatAlreadyEndsInANumberContinuesFromIt() throws {
+        XCTAssertEqual(
+            try receiveFiles([("report(1).txt", "a"), ("report(1).txt", "b")]),
+            ["report(1).txt", "report(2).txt"]
+        )
+    }
+
+    func testNameWithSeveralDotsKeepsOnlyTheLastExtension() throws {
+        XCTAssertEqual(
+            try receiveFiles([("archive.tar.gz", "a"), ("archive.tar.gz", "b")]),
+            ["archive.tar.gz", "archive.tar(1).gz"]
+        )
+    }
+
+    func testMetadataIsPassedThroughWhenTheNameIsNumbered() throws {
+        _ = try receiveFiles([("log.txt", "a"), ("log.txt", "b")])
+
+        guard case let .fileReceived(fileURL, metadata) = events.last else { return XCTFail("\(events)") }
+        XCTAssertEqual(fileURL.lastPathComponent, "log(1).txt")
+        XCTAssertEqual(metadata["name"] as? String, "log.txt")
     }
 
     func testReceivedFileThatCannotBeCopiedReportsNothing() {
