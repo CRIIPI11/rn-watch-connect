@@ -16,7 +16,7 @@ enum SessionEvent {
     case dataMessageWithReply(Data, replyId: String)
     case applicationContext([String: Any])
     case userInfo([String: Any])
-    /// `fileURL` points at the staged copy, which the app can read.
+    /// `fileURL` points at the staged file, which the app now owns.
     case fileReceived(fileURL: URL, metadata: [String: Any])
     /// Sent exactly once per Transfer. `error` is nil when the Transfer was delivered.
     case userInfoTransferFinished(UserInfoTransferSnapshot, error: Error?)

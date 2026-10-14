@@ -250,7 +250,7 @@ final class WatchSessionControllerTests: XCTestCase {
         return url
     }
 
-    func testReceivedFileIsStagedAndTheOriginalDeleted() throws {
+    func testReceivedFileIsMovedToStaging() throws {
         let incoming = try makeIncomingFile(named: "photo.jpg", contents: "jpeg")
 
         receive(.file(fileURL: incoming, metadata: ["album": "trip"]))
@@ -267,7 +267,7 @@ final class WatchSessionControllerTests: XCTestCase {
 
         port.simulate(.file(fileURL: incoming, metadata: nil))
 
-        // No queue drain: the copy must already exist.
+        // No queue drain: the moved file must already exist.
         XCTAssertTrue(FileManager.default.fileExists(
             atPath: stagingDirectory.appendingPathComponent("note.txt").path))
     }

@@ -24,7 +24,7 @@ final class WatchSessionController {
 
     /// - Parameters:
     ///   - queue: serial queue for inbound work and pending-Reply state.
-    ///   - stagingDirectory: where Received files are copied before they are reported.
+    ///   - stagingDirectory: where Received files are moved before they are reported.
     init(
         port: WatchSessionPort,
         queue: DispatchQueue = .main,
@@ -168,7 +168,7 @@ final class WatchSessionController {
 
     private func handle(_ event: WatchSessionPortEvent) {
         // WatchConnectivity deletes a received file when its callback returns,
-        // so the file is staged here, synchronously, before hopping queues.
+        // so the file is moved out here, synchronously, before hopping queues.
         if case let .file(fileURL, metadata) = event {
             stageReceivedFile(at: fileURL, metadata: metadata ?? [:])
             return
@@ -226,7 +226,7 @@ final class WatchSessionController {
     private func stageReceivedFile(at fileURL: URL, metadata: [String: Any]) {
         let destinationURL = freeStagingURL(for: fileURL.lastPathComponent)
         do {
-            try fileManager.copyItem(at: fileURL, to: destinationURL)
+            try fileManager.moveItem(at: fileURL, to: destinationURL)
         } catch {
             print("Error handling received file: \(error.localizedDescription)")
             return
@@ -234,12 +234,6 @@ final class WatchSessionController {
 
         queue.async { [weak self] in
             self?.emit(.fileReceived(fileURL: destinationURL, metadata: metadata))
-        }
-
-        do {
-            try fileManager.removeItem(at: fileURL)
-        } catch {
-            print("Error removing received file: \(error.localizedDescription)")
         }
     }
 
