@@ -22,6 +22,8 @@
 
 ### Behaviour changes
 
+- **Stricter TypeScript types.** `watchActivationState` is now `WatchActivationState` (`"notActivated" | "inactive" | "activated" | "unknown"`) instead of `string`. `applicationContext`, `receivedApplicationContext` and the payloads of `onMessageReceived`, `onMessageWithReply`, `onApplicationContextChanged` and `onUserInfoReceived` are now `Record<string, any>` instead of `any`. These are type changes only, with no runtime effect. Code that compares the activation state against a misspelled value now fails to compile.
+
 - **`transferUserInfo` returns the same shape as `outstandingUserInfoTransfers`.** It now includes `userInfo`, and in TypeScript it returns `OutstandingUserInfoTransfer`. `UserInfoTransfer` is now a deprecated alias of that type, so existing code still compiles.
 - **Status events fire only on a real change.** A new listener for `onReachabilityChanged`, `onWatchPairedChanged` or `onWatchAppInstallChanged` is no longer called right away with the current value. To get the current value, read `isWatchReachable`, `isWatchPaired` or `isWatchAppInstalled`, for example as the initial value of `useEvent`.
 

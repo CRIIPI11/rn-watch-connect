@@ -2,6 +2,9 @@ import { EventEmitter } from "expo";
 
 export type MessagePayload = Record<string, any>;
 
+/** Whether the Session is ready to carry data. */
+export type WatchActivationState = "notActivated" | "inactive" | "activated" | "unknown";
+
 export type OutstandingUserInfoTransfer = {
   id: string;
   userInfo: Record<string, any>;
@@ -52,17 +55,17 @@ export type RnWatchConnectModuleEvents = {
   /** Triggered when the Watch pairing status changes */
   onWatchPairedChanged: (params: { isWatchPaired: boolean }) => void;
   /** Triggered when a message is received from the Watch */
-  onMessageReceived: (message: any) => void;
+  onMessageReceived: (message: MessagePayload) => void;
   /** Triggered when a message requiring a reply is received from the Watch */
-  onMessageWithReply: (params: { message: any; replyId: string }) => void;
+  onMessageWithReply: (params: { message: MessagePayload; replyId: string }) => void;
   /** Triggered when a data message is received from the Watch */
   onDataMessageReceived: (messageData: { data: string }) => void;
   /** Triggered when a data message requiring a reply is received from the Watch */
   onDataMessageWithReply: (params: { data: string; replyId: string }) => void;
   /** Triggered when the application context changes */
-  onApplicationContextChanged: (params: any) => void;
+  onApplicationContextChanged: (params: Record<string, any>) => void;
   /** Triggered when user info is received from the Watch */
-  onUserInfoReceived: (params: any) => void;
+  onUserInfoReceived: (params: Record<string, any>) => void;
   /** Triggered when a file is received from the Watch */
   onFileReceived: (params: File) => void;
   /** Triggered exactly once per User Info Transfer: delivered (`error: null`), failed, or cancelled */
@@ -79,9 +82,9 @@ export interface RnWatchConnectInterface
   readonly isWatchPaired: boolean;
   readonly isWatchAppInstalled: boolean;
   readonly isWatchReachable: boolean;
-  readonly watchActivationState: string;
-  readonly applicationContext: any;
-  readonly receivedApplicationContext: any;
+  readonly watchActivationState: WatchActivationState;
+  readonly applicationContext: Record<string, any>;
+  readonly receivedApplicationContext: Record<string, any>;
   readonly outstandingUserInfoTransfers: OutstandingUserInfoTransfer[];
   readonly outstandingFileTransfers: FileTransfer[];
   // Message Methods

@@ -41,7 +41,7 @@ yarn add rn-watch-connect
 | `isWatchPaired`                | `boolean`                       | Indicates if an Apple Watch is paired with the device      |
 | `isWatchAppInstalled`          | `boolean`                       | Indicates if the Watch app is installed                    |
 | `isWatchReachable`             | `boolean`                       | Indicates if the paired Watch is currently reachable       |
-| `watchActivationState`         | `string`                        | Current activation state of the Watch Connectivity session |
+| `watchActivationState`         | [`WatchActivationState`](#watchactivationstate) | Current activation state of the Watch Connectivity session |
 | `applicationContext`           | `{ [key: string]: any }`        | Current application context                                |
 | `receivedApplicationContext`   | `{ [key: string]: any }`        | Received application context from the Watch                |
 | `outstandingUserInfoTransfers` | [`OutstandingUserInfoTransfer[]`](#outstandinguserinfotransfer) | Outstanding user info transfers                            |
@@ -506,6 +506,10 @@ useEventListener(
 ## Types
 
 > **Transfer ids** (`id` on the types below) are valid only for the current app run. After the app restarts, a Transfer that is still outstanding gets a new id.
+
+### `WatchActivationState`
+
+`"notActivated" | "inactive" | "activated" | "unknown"`. `"unknown"` is returned when WatchConnectivity isn't supported on the device.
 
 ### `OutstandingUserInfoTransfer`
 
