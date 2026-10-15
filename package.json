@@ -29,7 +29,10 @@
     "apple-watch-message-transfer",
     "apple-watch-file-transfer"
   ],
-  "repository": "https://github.com/CRIIPI11/rn-watch-connect",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/CRIIPI11/rn-watch-connect.git"
+  },
   "bugs": {
     "url": "https://github.com/CRIIPI11/rn-watch-connect/issues"
   },

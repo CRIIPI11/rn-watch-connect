@@ -21,3 +21,13 @@ __tests__
 
 # Test config
 /jest.config.cjs
+
+# TypeScript build cache (a hidden file, so /.*/ above doesn't catch it)
+/.tsbuildinfo
+/tsconfig.json
+
+# Repo tooling and docs for contributors and agents, not for users
+/AGENTS.md
+/GLOSSARY.md
+/docs/
+/oxlint.config.mjs
