@@ -79,3 +79,9 @@ _Avoid_: Transfer info, transfer status
 
 **Received file**:
 A file the Watch sent to the iPhone, kept by the library at a location the app can read.
+
+### Failures
+
+**Error code**:
+The stable name of one kind of failure, such as Watch not reachable. It is the same whether the failure is thrown or reported in an event, and it never changes between versions, unlike the error message.
+_Avoid_: Error type, error ID

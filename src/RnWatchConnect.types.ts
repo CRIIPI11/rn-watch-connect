@@ -23,6 +23,8 @@ export type File = {
 export type FileReceiveFailedEvent = {
   /** Why the file couldn't be kept, for example because the iPhone is out of storage. */
   message: string;
+  /** `ERR_INSUFFICIENT_SPACE` when the iPhone is out of storage, otherwise `ERR_FILE_RECEIVE_FAILED`. */
+  code: WatchConnectErrorCode;
   /** The file name the Watch sent. */
   fileName: string;
   /** What the Watch sent with the file, or `null` when it sent nothing. */
@@ -42,9 +44,49 @@ export type FileTransfer = {
   file: File;
 };
 
+/**
+ * The stable Error code of a failure: the `code` of a thrown or rejected error, and of the errors
+ * in events. Match on it, never on `message`, which can change. See the README "Errors" section.
+ */
+export type WatchConnectErrorCode =
+  // Not a known failure (Expo's default code)
+  | "ERR_UNEXPECTED"
+  // Called on a platform other than iOS
+  | "ERR_UNSUPPORTED_PLATFORM"
+  // The library's own checks
+  | "ERR_WATCH_NOT_REACHABLE"
+  | "ERR_REPLY_NOT_PENDING"
+  | "ERR_INVALID_BASE64"
+  | "ERR_INVALID_TRANSFER_ID"
+  | "ERR_INVALID_FILE_URL"
+  | "ERR_FILE_NOT_FOUND"
+  | "ERR_TRANSFER_CANCELLED"
+  | "ERR_FILE_RECEIVE_FAILED"
+  // WatchConnectivity's own errors (WCError)
+  | "ERR_GENERIC_ERROR"
+  | "ERR_SESSION_NOT_SUPPORTED"
+  | "ERR_SESSION_MISSING_DELEGATE"
+  | "ERR_SESSION_NOT_ACTIVATED"
+  | "ERR_DEVICE_NOT_PAIRED"
+  | "ERR_WATCH_APP_NOT_INSTALLED"
+  | "ERR_INVALID_PARAMETER"
+  | "ERR_PAYLOAD_TOO_LARGE"
+  | "ERR_PAYLOAD_UNSUPPORTED_TYPES"
+  | "ERR_MESSAGE_REPLY_FAILED"
+  | "ERR_MESSAGE_REPLY_TIMED_OUT"
+  | "ERR_FILE_ACCESS_DENIED"
+  | "ERR_DELIVERY_FAILED"
+  | "ERR_INSUFFICIENT_SPACE"
+  | "ERR_SESSION_INACTIVE"
+  | "ERR_TRANSFER_TIMED_OUT"
+  | "ERR_COMPANION_APP_NOT_INSTALLED"
+  | "ERR_WATCH_ONLY_APP";
+
 /** Why a Transfer finished without being delivered. `null` in a finish event means it was delivered. */
 export type TransferFinishError = {
   message: string;
+  /** For example `ERR_TRANSFER_CANCELLED`, or a WatchConnectivity code like `ERR_DELIVERY_FAILED`. */
+  code: WatchConnectErrorCode;
 };
 
 /** Sent exactly once per User Info Transfer, when it was delivered, failed or was cancelled. */

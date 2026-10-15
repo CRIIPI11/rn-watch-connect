@@ -17,7 +17,6 @@ export type TrackedTransfer = {
 const POLL_INTERVAL_MS = 500;
 const KEEP_FINISHED_MS = 5000;
 const CHUNK_BYTES = 1024 * 1024;
-const CANCELLED_MESSAGE = "Transfer cancelled";
 
 /** Writes `bytes` of test data in 1 MB chunks, so a 50 MB file never sits in one JS string. */
 function writeTestFile(name: string, bytes: number): File {
@@ -104,7 +103,7 @@ export function useFileTransfers() {
   useEventListener(RnWatchConnect, "onFileTransferFinished", (finished) => {
     const status: TransferStatus = !finished.error
       ? "delivered"
-      : finished.error.message === CANCELLED_MESSAGE
+      : finished.error.code === "ERR_TRANSFER_CANCELLED"
         ? "cancelled"
         : "failed";
     setLastFinishedId(finished.id);

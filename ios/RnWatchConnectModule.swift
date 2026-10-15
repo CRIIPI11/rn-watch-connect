@@ -53,22 +53,24 @@ public class RnWatchConnectModule: Module {
                     promise.resolve(reply)
                 },
                 errorHandler: { error in
-                    promise.reject(error)
+                    promise.reject(WatchConnectException(error))
                 }
             )
         }
 
         AsyncFunction("sendMessageWithoutReply") { (message: [String: Any]) in
-            try self.controller.sendMessageWithoutReply(message)
+            try withErrorCodes { try self.controller.sendMessageWithoutReply(message) }
         }
         
         AsyncFunction("replyToMessage") { (replyId: String, response: [String: Any]) in
-            try self.controller.replyToMessage(replyId: replyId, reply: response)
+            try withErrorCodes { try self.controller.replyToMessage(replyId: replyId, reply: response) }
         }
 
         AsyncFunction("replyToDataMessage") { (replyId: String, response: String) in
-            let decodedData = try validateBase64(response)
-            try self.controller.replyToDataMessage(replyId: replyId, reply: decodedData)
+            try withErrorCodes {
+                let decodedData = try validateBase64(response)
+                try self.controller.replyToDataMessage(replyId: replyId, reply: decodedData)
+            }
         }
         
         AsyncFunction("sendDataMessage") { (data: String, promise: Promise) in
@@ -81,21 +83,23 @@ public class RnWatchConnectModule: Module {
                         promise.resolve(responseData.base64EncodedString())
                     },
                     errorHandler: { error in
-                        promise.reject(error)
+                        promise.reject(WatchConnectException(error))
                     }
                 )
             } catch {
-                promise.reject(error)
+                promise.reject(WatchConnectException(error))
             }
         }
 
         AsyncFunction("sendDataMessageWithoutReply") { (data: String) in
-            let decodedData = try validateBase64(data)
-            try self.controller.sendDataMessageWithoutReply(decodedData)
+            try withErrorCodes {
+                let decodedData = try validateBase64(data)
+                try self.controller.sendDataMessageWithoutReply(decodedData)
+            }
         }
         
         AsyncFunction("updateApplicationContext") { (applicationContext: [String: Any]) in
-            try self.controller.updateApplicationContext(applicationContext)
+            try withErrorCodes { try self.controller.updateApplicationContext(applicationContext) }
         }
 
         Function("transferUserInfo") { (userInfo: [String: Any]) -> [String: Any] in
@@ -103,16 +107,16 @@ public class RnWatchConnectModule: Module {
         }
 
         Function("cancelUserInfoTransfer") { (transferId: String) -> [String: Any] in
-            try self.controller.cancelUserInfoTransfer(id: transferId)
+            try withErrorCodes { try self.controller.cancelUserInfoTransfer(id: transferId) }
             return ["id": transferId]
         }
 
         Function("transferFile") { (file: String, metadata: [String: Any]?) -> [String: Any] in
-            JSEvents.value(try self.controller.transferFile(file, metadata: metadata))
+            JSEvents.value(try withErrorCodes { try self.controller.transferFile(file, metadata: metadata) })
         }
         
         Function("cancelFileTransfer") { (transferId: String) -> [String: Any] in
-            try self.controller.cancelFileTransfer(id: transferId)
+            try withErrorCodes { try self.controller.cancelFileTransfer(id: transferId) }
             return ["id": transferId]
         }
 

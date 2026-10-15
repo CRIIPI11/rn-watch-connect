@@ -55,6 +55,13 @@ function readText(uri: string): string {
   }
 }
 
+/** An error for the Activity log: its Error code, then its message. */
+function describeError(error: unknown): string {
+  if (!(error instanceof Error)) return String(error);
+  const code = (error as { code?: string }).code;
+  return code ? `${code} · ${error.message}` : error.message;
+}
+
 /** Short Transfer id for the Activity log, to match a start with its finish event. */
 const shortId = (id: string) => id.slice(0, 8);
 
@@ -138,7 +145,7 @@ function ExampleScreen() {
       try {
         await action();
       } catch (error) {
-        addLog("error", key, error instanceof Error ? error.message : error);
+        addLog("error", key, describeError(error));
       } finally {
         setBusy(undefined);
       }
@@ -199,15 +206,15 @@ function ExampleScreen() {
     addLog("in", "File", `${name}: ${contents}`);
   });
 
-  useEventListener(RnWatchConnect, "onFileReceiveFailed", ({ message, fileName, metadata }) => {
-    addLog("error", "File lost", `${metadata?.name ?? fileName}: ${message}`);
+  useEventListener(RnWatchConnect, "onFileReceiveFailed", ({ message, code, fileName, metadata }) => {
+    addLog("error", "File lost", `${metadata?.name ?? fileName}: ${code} · ${message}`);
   });
 
   // Exactly one per transfer: delivered (error: null), failed, or cancelled.
   useEventListener(RnWatchConnect, "onFileTransferFinished", (transfer) => {
     const name = transfer.file.metadata?.name ?? "file";
     if (transfer.error) {
-      addLog("error", "File transfer ended", `${name} · ${shortId(transfer.id)}: ${transfer.error.message}`);
+      addLog("error", "File transfer ended", `${name} · ${shortId(transfer.id)}: ${transfer.error.code} · ${transfer.error.message}`);
     } else {
       addLog("in", "File delivered", `${name} · ${shortId(transfer.id)}`);
     }
@@ -218,7 +225,7 @@ function ExampleScreen() {
       addLog(
         "error",
         "User info transfer ended",
-        `${shortId(transfer.id)}: ${transfer.error.message}`,
+        `${shortId(transfer.id)}: ${transfer.error.code} · ${transfer.error.message}`,
       );
     } else {
       addLog("in", "User info delivered", shortId(transfer.id));
