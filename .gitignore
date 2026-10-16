@@ -58,3 +58,10 @@ yarn-error.log
 
 # Expo
 .expo/*
+
+# TypeScript
+.tsbuildinfo
+
+# SwiftPM (ios/Package.swift test harness)
+ios/.build/
+ios/.swiftpm/
