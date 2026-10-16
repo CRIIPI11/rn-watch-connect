@@ -177,6 +177,7 @@ export interface RnWatchConnectInterface
    * Sends a message to the Watch and waits for a reply.
    * @param message - The message to send
    * @returns A promise that resolves with the Watch's reply
+   * @throws `ERR_UNSUPPORTED_PLATFORM` on platforms other than iOS. Check `isWatchSupported` first.
    */
   sendMessage<T extends MessagePayload, R extends MessagePayload>(
     message: T
@@ -184,12 +185,14 @@ export interface RnWatchConnectInterface
   /**
    * Sends a message to the Watch without waiting for a reply.
    * @param message - The message to send
+   * @throws `ERR_UNSUPPORTED_PLATFORM` on platforms other than iOS. Check `isWatchSupported` first.
    */
   sendMessageWithoutReply<T extends MessagePayload>(message: T): Promise<void>;
   /**
    * Sends a reply to a message received from the Watch.
    * @param replyId - The ID of the message to reply to
    * @param reply - The message to send as a reply
+   * @throws `ERR_UNSUPPORTED_PLATFORM` on platforms other than iOS. Check `isWatchSupported` first.
    * @deprecated Use the `reply` function from the event instead. Will be removed in a future
    * major version.
    * ```ts
@@ -203,6 +206,7 @@ export interface RnWatchConnectInterface
   /**
    * Cancels a pending user info transfer.
    * @param transferId - The ID of the transfer to cancel
+   * @throws `ERR_UNSUPPORTED_PLATFORM` on platforms other than iOS. Check `isWatchSupported` first.
    */
   cancelUserInfoTransfer(transferId: string): {
     id: string;
@@ -213,12 +217,14 @@ export interface RnWatchConnectInterface
    * Sends a base64 encoded data message to the paired Watch and waits for a reply.
    * @param data - The base64 encoded string to send
    * @returns A promise that resolves with the Watch's base64 encoded string reply
+   * @throws `ERR_UNSUPPORTED_PLATFORM` on platforms other than iOS. Check `isWatchSupported` first.
    */
   sendDataMessage(data: string): Promise<string>;
 
   /**
    * Sends a base64 encoded data message to the paired Watch without waiting for a reply.
    * @param data - The base64 encoded string to send
+   * @throws `ERR_UNSUPPORTED_PLATFORM` on platforms other than iOS. Check `isWatchSupported` first.
    */
   sendDataMessageWithoutReply(data: string): Promise<void>;
 
@@ -226,6 +232,7 @@ export interface RnWatchConnectInterface
    * Sends a reply to a data message received from the Watch.
    * @param replyId - The ID of the message to reply to
    * @param response - The base64 encoded string to send as a reply
+   * @throws `ERR_UNSUPPORTED_PLATFORM` on platforms other than iOS. Check `isWatchSupported` first.
    * @deprecated Use the `reply` function from the event instead. Will be removed in a future
    * major version.
    * ```ts
@@ -239,6 +246,7 @@ export interface RnWatchConnectInterface
   /**
    * Updates the application context on the Watch.
    * @param applicationContext - The application context to update
+   * @throws `ERR_UNSUPPORTED_PLATFORM` on platforms other than iOS. Check `isWatchSupported` first.
    */
   updateApplicationContext<T extends Record<string, any>>(
     applicationContext: T
@@ -248,6 +256,7 @@ export interface RnWatchConnectInterface
    * Transfers user info to the Watch.
    * @param userInfo - The user info to transfer
    * @returns The transfer, in the same shape as `outstandingUserInfoTransfers`
+   * @throws `ERR_UNSUPPORTED_PLATFORM` on platforms other than iOS. Check `isWatchSupported` first.
    */
   transferUserInfo<T extends Record<string, any>>(
     userInfo: T
@@ -258,12 +267,14 @@ export interface RnWatchConnectInterface
    * @param file - The file to transfer
    * @param metadata - The metadata to transfer
    * @returns The transfer, in the same shape as `outstandingFileTransfers`
+   * @throws `ERR_UNSUPPORTED_PLATFORM` on platforms other than iOS. Check `isWatchSupported` first.
    */
   transferFile(file: string, metadata?: Record<string, any>): FileTransfer;
 
   /**
    * Cancels a pending file transfer.
    * @param transferId - The ID of the transfer to cancel
+   * @throws `ERR_UNSUPPORTED_PLATFORM` on platforms other than iOS. Check `isWatchSupported` first.
    */
   cancelFileTransfer(transferId: string): {
     id: string;

@@ -21,6 +21,11 @@ describe("Error codes", () => {
     expect(new Set(ERROR_CODES).size).toBe(ERROR_CODES.length);
   });
 
+  it("the non-iOS stub reports WatchConnectivity as unsupported", () => {
+    expect(stub.isWatchSupported).toBe(false);
+    expect(stub.watchActivationState).toBe("unknown");
+  });
+
   it("the non-iOS stub rejects and throws with ERR_UNSUPPORTED_PLATFORM", async () => {
     await expect(stub.sendMessage({})).rejects.toMatchObject({ code: "ERR_UNSUPPORTED_PLATFORM" });
     expect(() => stub.transferFile("file:///a.txt")).toThrow(
