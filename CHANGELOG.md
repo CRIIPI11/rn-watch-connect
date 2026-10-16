@@ -24,6 +24,7 @@ These still work and will be removed in a future major version.
 
 ### Bug fixes
 
+- **`watchActivationState` is `"unknown"` on platforms other than iOS.** It was `"notActivated"`, which looks like a failed activation. `"unknown"` is what the README documents, and what iOS returns on a device without WatchConnectivity.
 - **Received files with the same name no longer overwrite each other.** Each Received file was copied to the temporary directory under its own name, replacing any earlier file with that name, so two `onFileReceived` events could point at the same file. A name that's already taken is now numbered the way Finder does it (`photo(1).jpg`, `photo(2).jpg`, …). `metadata` is unchanged.
 
 - **Transfer ids can no longer point at the wrong Transfer.** Ids were derived from memory addresses, which the system can reuse after a Transfer ends, so an old id could cancel a different Transfer. Ids are now unique for the whole app run. Note that they are only valid for the current app run.

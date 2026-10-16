@@ -23,7 +23,8 @@ const module: NativeRnWatchConnect = {
   isWatchPaired: false,
   isWatchAppInstalled: false,
   isWatchReachable: false,
-  watchActivationState: "notActivated",
+  // Same as iOS on a device without WatchConnectivity.
+  watchActivationState: "unknown",
   applicationContext: {},
   receivedApplicationContext: {},
   outstandingUserInfoTransfers: [],

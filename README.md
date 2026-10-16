@@ -579,7 +579,7 @@ WatchConnectivity's own errors (for example when sending, updating the Applicati
 
 ### `WatchActivationState`
 
-`"notActivated" | "inactive" | "activated" | "unknown"`. `"unknown"` is returned when WatchConnectivity isn't supported on the device.
+`"notActivated" | "inactive" | "activated" | "unknown"`. `"unknown"` is returned when WatchConnectivity isn't supported: on a device without it, and on platforms other than iOS.
 
 The session activates when the module loads, and there is no event for a failed activation. If `watchActivationState` still isn't `"activated"` shortly after launch, activation failed.
 
