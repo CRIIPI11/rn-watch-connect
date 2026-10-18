@@ -1,7 +1,8 @@
 import XCTest
 @testable import WatchSession
 
-/// The Error codes JS matches on. Each expectation mirrors the README "Errors" table and
+/// The Error codes JS matches on. Each expectation mirrors the docs site's Error codes page
+/// (https://rn-watch-connect.vercel.app/docs/errors) and
 /// `WatchConnectErrorCode` in src/RnWatchConnect.types.ts.
 final class ErrorCodesTests: XCTestCase {
     private func wcError(_ number: Int) -> NSError {

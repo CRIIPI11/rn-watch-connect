@@ -46,7 +46,7 @@ export type FileTransfer = {
 
 /**
  * The stable Error code of a failure: the `code` of a thrown or rejected error, and of the errors
- * in events. Match on it, never on `message`, which can change. See the README "Errors" section.
+ * in events. Match on it, never on `message`, which can change. See https://rn-watch-connect.vercel.app/docs/errors
  */
 export type WatchConnectErrorCode =
   // Not a known failure (Expo's default code)

@@ -38,7 +38,7 @@
   },
   "author": "Cristhian Molina <cdml2001@hotmail.com> (https://github.com/CRIIPI11)",
   "license": "MIT",
-  "homepage": "https://github.com/CRIIPI11/rn-watch-connect#readme",
+  "homepage": "https://rn-watch-connect.vercel.app",
   "dependencies": {},
   "devDependencies": {
     "@types/react": "~19.2.0",
