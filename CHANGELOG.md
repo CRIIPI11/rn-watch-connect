@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.0.1 (2026-10-19)
+
+### Documentation
+
+- **The docs moved to a docs site.** The full documentation now lives at https://rn-watch-connect.vercel.app, including `llms.txt` and `llms-full.txt` for AI agents. The README is shorter and links there, and the npm package's homepage points to it. No code changes.
+
 ## 2.0.0 (2026-10-16)
 
 ### Breaking changes
