@@ -2,6 +2,16 @@
 
 A React Native module that enables smooth and reliable communication between an iOS app and its paired Apple Watch using Apple’s [WatchConnectivity](https://developer.apple.com/documentation/watchconnectivity) framework. This library offers an easy-to-use interface for sending messages, transferring files, syncing data, and monitoring the connection status between the iPhone and Apple Watch — all from a React Native app.
 
+## 📖 Documentation
+
+**Full docs: [rn-watch-connect.vercel.app](https://rn-watch-connect.vercel.app)**
+
+- [Installation](https://rn-watch-connect.vercel.app/docs/installation)
+- API: [Watch status](https://rn-watch-connect.vercel.app/docs/watch-status), [Messages](https://rn-watch-connect.vercel.app/docs/messages), [Data Messages](https://rn-watch-connect.vercel.app/docs/data-messages), [Application Context](https://rn-watch-connect.vercel.app/docs/application-context), [User Info](https://rn-watch-connect.vercel.app/docs/user-info), [File Transfer](https://rn-watch-connect.vercel.app/docs/file-transfer)
+- [Error codes](https://rn-watch-connect.vercel.app/docs/errors)
+- [Migrating from 1.x to 2.0](https://rn-watch-connect.vercel.app/docs/migration)
+- [Using the docs with AI agents](https://rn-watch-connect.vercel.app/docs/ai-agents): [`llms.txt`](https://rn-watch-connect.vercel.app/llms.txt) and [`llms-full.txt`](https://rn-watch-connect.vercel.app/llms-full.txt)
+
 > ⚠️ **Note:** This module does **NOT** provide a way to build Apple Watch apps. A separate Watch app must still be developed using Swift or SwiftUI. This package is intended as a modern, actively maintained alternative to the previously available (but now outdated) React Native watch connectivity module.
 
 🙌 Contributions are welcome! If you'd like to improve the module or add new features, feel free to open an issue or submit a pull request.
@@ -22,16 +32,6 @@ yarn add rn-watch-connect
 ```
 
 The module has native code, so rebuild your app after installing it (for example `npx expo run:ios`, or a new development build). A JS reload isn't enough, and it doesn't run in Expo Go.
-
-## 📖 Documentation
-
-**Full docs: [rn-watch-connect.vercel.app](https://rn-watch-connect.vercel.app)**
-
-- [Installation](https://rn-watch-connect.vercel.app/docs/installation)
-- API: [Watch status](https://rn-watch-connect.vercel.app/docs/watch-status), [Messages](https://rn-watch-connect.vercel.app/docs/messages), [Data Messages](https://rn-watch-connect.vercel.app/docs/data-messages), [Application Context](https://rn-watch-connect.vercel.app/docs/application-context), [User Info](https://rn-watch-connect.vercel.app/docs/user-info), [File Transfer](https://rn-watch-connect.vercel.app/docs/file-transfer)
-- [Error codes](https://rn-watch-connect.vercel.app/docs/errors)
-- [Migrating from 1.x to 2.0](https://rn-watch-connect.vercel.app/docs/migration)
-- [Using the docs with AI agents](https://rn-watch-connect.vercel.app/docs/ai-agents): [`llms.txt`](https://rn-watch-connect.vercel.app/llms.txt) and [`llms-full.txt`](https://rn-watch-connect.vercel.app/llms-full.txt)
 
 ## ✨ Features
 
