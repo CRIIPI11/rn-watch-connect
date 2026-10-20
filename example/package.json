@@ -29,5 +29,9 @@
     "autolinking": {
       "nativeModulesDir": ".."
     }
+  },
+  "overrides": {
+    "@xmldom/xmldom": "^0.8.15",
+    "uuid": "^11.1.1"
   }
 }
