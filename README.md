@@ -12,7 +12,7 @@ A React Native module that enables smooth and reliable communication between an 
 - [Migrating from 1.x to 2.0](https://rn-watch-connect.vercel.app/docs/migration)
 - [Using the docs with AI agents](https://rn-watch-connect.vercel.app/docs/ai-agents): [`llms.txt`](https://rn-watch-connect.vercel.app/llms.txt) and [`llms-full.txt`](https://rn-watch-connect.vercel.app/llms-full.txt)
 
-> ⚠️ **Note:** This module does **NOT** provide a way to build Apple Watch apps. A separate Watch app must still be developed using Swift or SwiftUI. This package is intended as a modern, actively maintained alternative to the previously available (but now outdated) React Native watch connectivity module.
+> ⚠️ **Note:** This module does **NOT** provide a way to build Apple Watch apps. A separate Watch app must still be developed using Swift or SwiftUI.
 
 🙌 Contributions are welcome! If you'd like to improve the module or add new features, feel free to open an issue or submit a pull request.
 
