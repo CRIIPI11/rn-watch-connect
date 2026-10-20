@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.0.2 (2026-10-20)
+
+### Documentation
+
+- **README note trimmed.** Removed the outdated line about replacing an older React Native watch connectivity module, so the npm page matches the README on GitHub. No code changes.
+
 ## 2.0.1 (2026-10-19)
 
 ### Documentation
